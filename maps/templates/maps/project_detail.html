@@ -1,0 +1,94 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% block title %}{% trans "Monitoring network" %} {{object}} {% endblock %}
+{% block style %}
+{{ block.super }}
+<link rel="stylesheet" href="//unpkg.com/leaflet@1.4.0/dist/leaflet.css"/>
+<link rel="stylesheet" href="//unpkg.com/leaflet.markercluster@1.0.5/dist/MarkerCluster.css"/>
+<link rel="stylesheet" href="//unpkg.com/leaflet.markercluster@1.0.5/dist/MarkerCluster.Default.css"/>
+<link rel="stylesheet" href="//ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/themes/smoothness/jquery-ui.css">
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous"/>
+<link rel="stylesheet" href="/static/css/leaflet.wmslegend.css"/>
+<link rel="stylesheet" href="/static/css/maps.css"/>
+{% endblock %}
+{% block script %}
+{{ block.super }}
+<script src="//maps.googleapis.com/maps/api/js?key={{api_key}}" async defer></script>
+<script src="//unpkg.com/leaflet@1.4.0/dist/leaflet.js"></script>
+<script src="//unpkg.com/leaflet.gridlayer.googlemutant@latest/Leaflet.GoogleMutant.js"></script>
+<script src="//unpkg.com/leaflet.markercluster@1.0.5/dist/leaflet.markercluster.js"></script>
+<script src="//unpkg.com/esri-leaflet@2.1.1/dist/esri-leaflet.js"></script>
+<script src="//ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
+<script src="/static/js/leaflet.wmslegend.js"></script>
+<script src="/static/js/betterwms.js"></script>
+<script src="/static/js/maps.js"></script>
+<script>
+
+$(function() {
+	const map = initMap('map',{{options|safe}});
+	const control = map.layerControl
+	const layers = {{object.map.asjson|safe}};
+	$.each(layers, (layer, options) => {
+		let overlay = L.tileLayer.wms(options.url, options);
+		control.addOverlay(overlay,layer);
+		if (options.visible) {
+			overlay.addTo(map);
+		}
+	});
+	const data = {{series|safe}};
+	if (data) {
+		addMarkers(map,data,false);
+	}
+ 	$("#list").height($("#map").height());
+});
+
+function toggle(layer) {
+	let map = theMap;
+	let control = map.layerControl;
+	layer.visible = !layer.visible;
+	if (layer.visible) {
+		// TODO: finish		
+	}
+}
+
+</script>
+{% endblock %}
+{% block content %}
+<div class="full container-fluid">
+	<div class="full row row-fluid">
+		<div id="map" class="full col-sm-10"></div>
+		{% block list %}
+		<ul id="list" class="list-group scroll col-sm-2">
+			{% if object.timeseries %}
+			<a class="list-group-item active" data-toggle="collapse" href="#series" aria-expanded="true" aria-controls="series">
+				<i class="fas pr-3 fa-chart-line"></i>{%trans "Timeseries"%}
+			</a>
+			<div class="collapse hide" id="series">
+			</div>
+			{% endif %}
+			<a class="list-group-item active" data-toggle="collapse" href="#layers" aria-expanded="true" aria-controls="layers">
+				<i class="fas pr-3 fa-layer-group"></i>{%trans "Layers"%}<i class="fas fa-list float-right" title="show legends"></i>
+			</a>
+			<div class="collapse show" id="layers">
+				{% for layer in object.map.layer_set.all %}
+				{% with name=layer.layer.title id=forloop.counter %}
+				<li class="list-group-item">
+					{% if layer.visible %}
+						<i class="fas pr-1 fa-check" style="color:black" onclick="toggle(layer);"></i>
+					{% else %}
+						<i class="fas pr-1 fa-check" style="color:lightgray" onclick="toggle(layer);"></i>
+					{% endif %}
+					{{name}}
+					<a data-toggle="collapse" href="#leg{{id}}"><i class="fas fa-list float-right" title="toggle {{name}} legend"></i></a>
+					<div class="collapse hide" id="leg{{id}}">
+					<img src="{{layer.layer.legend_url}}"></img>
+					</div>
+				</li>
+				{% endwith %}
+				{% endfor %}
+			</div>
+		</ul>
+		{% endblock list %}
+	</div>
+</div>
+{% endblock %}
