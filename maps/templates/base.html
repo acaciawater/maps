@@ -21,6 +21,9 @@
     html, body {
     	height: 100%;
     }
+    .logo {
+      height: 72px;
+    }
     </style>
 
 	{% endblock %}
@@ -28,6 +31,9 @@
 {% csrf_token %}
 <body>
     {% block header %}
+    <nav class="navbar navbar-dark bg-dark">
+    <span class=""><img class="logo" src="/static/default-logo.png"></img></span>
+    </nav>
     {% endblock header %}
     {% block content %}
     {% endblock content %}
