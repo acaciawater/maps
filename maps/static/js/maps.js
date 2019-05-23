@@ -101,13 +101,61 @@ function addMarkers(map,options,zoom) {
 	});
 }
 
-function addMarkerGroup(map) {
-	$.getJSON('/locs', function(data) {
-		var markers = L.markerClusterGroup(); 
-		$.each(data, function(key,val) {
-			markers.addLayer(L.marker([val.lat, val.lon]));
+/**
+ * Adds a location item to the map 
+ * @param map
+ * @param item
+ * @returns
+ */
+function addItemToMap(item, map, urls) {
+	marker = L.marker([item.lat, item.lon],{title:item.name, icon:redBullet});
+	markers[item.id] = marker;
+	marker.bindPopup("Loading...",{maxWidth: "auto"});
+	marker.bindTooltip(item.name,{permanent:true,className:"label",opacity:0.7,direction:"top",offset:[0,-10]});
+	marker.on("click", function(e) {
+		const popup = e.target.getPopup();
+		// retrieve popup content from remote site
+	    $.get(urls.popup+item.id)
+		    .done(function(data) {
+		    	// convert paths like href="/net/.." or src="/static/.." to absolute urls using server url as base
+		    	data = data.replace(/(((href|src)=['"])\/)/g,'$2'+urls.server+'/');
+		        popup.setContent(data);
+		        popup.update();
+		    })
+		    .fail(function() {
+		    	popup.closePopup();
+		    });
+	});
+	return marker.addTo(map);
+}
+
+/**
+ * Adds location item to list
+ * @param item
+ * @param list
+ * @returns
+ */
+function addItemToList(item, list) {
+	let date = "";
+	let value = "";
+	if (item.latest) {
+		date = new Date(item.latest.time).toLocaleDateString("nl-NL",dateOptions);
+		value = `${item.latest.value.toPrecision(3)} ${item.latest.unit}`;
+	}
+	list.append(`<a class="list-group-item list-group-item-action" 
+		href="/chart/${item.id}/" onmouseover="showMarker(${item.id});" onmouseout="hideMarker();">
+		${item.name}
+		<span class="float-right"><small>${date}</small></span><br>
+		<small>${item.description}<span class="float-right">${value}</span></small></a>`);
+}
+
+function addItems(map,list,urls) {
+	return $.getJSON(urls.items).then(data => {
+		$.each(data, (key,item) => {
+			addItemToMap(item, map, urls);
+			addItemToList(item, list);
 		});
-		map.addLayer(markers);
+		return data;
 	});
 }
 

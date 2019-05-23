@@ -7,7 +7,7 @@ html, body, .wrapper, .full {
 }
 
 #list {
-	padding: 0px 8px 0px 8px;
+/*	padding: 0px 8px 0px 8px;*/
 	overflow-y: auto;
 }
 

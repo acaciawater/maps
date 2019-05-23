@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 {% load i18n %}
-{% block title %}{% trans "Monitoring network" %} {{object}} {% endblock %}
+{% block title %}{{object.title}} {% endblock %}
 {% block style %}
 {{ block.super }}
 <link rel="stylesheet" href="//unpkg.com/leaflet@1.4.0/dist/leaflet.css"/>
@@ -25,21 +25,32 @@
 <script>
 
 $(function() {
-	const map = initMap('map',{{options|safe}});
+	const options = {{options|safe}};
+	const map = initMap('map',options);
 	const control = map.layerControl
 	const layers = {{object.map.asjson|safe}};
-	$.each(layers, (layer, options) => {
+	let count = 0;
+	$.each(layers, (name, options) => {
 		let overlay = L.tileLayer.wms(options.url, options);
-		control.addOverlay(overlay,layer);
+		control.addOverlay(overlay,name);
 		if (options.visible) {
 			overlay.addTo(map);
+			count++;
 		}
 	});
-	const data = {{series|safe}};
-	if (data) {
-		addMarkers(map,data,false);
-	}
+	$("#layercount").html(`${count}`);
  	$("#list").height($("#map").height());
+
+{% if urls %}
+ 	const urls = {{urls|safe}};
+	if (urls) {
+		addItems(map, $("#series"), urls)
+			.then(items => {
+				$("#itemcount").html(`${items.length}`);
+			});
+	}
+{% endif %}
+
 });
 
 function toggle(layer) {
@@ -58,16 +69,9 @@ function toggle(layer) {
 	<div class="full row row-fluid">
 		<div id="map" class="full col-sm-10"></div>
 		{% block list %}
-		<ul id="list" class="list-group scroll col-sm-2">
-			{% if object.timeseries %}
-			<a class="list-group-item active" data-toggle="collapse" href="#series" aria-expanded="true" aria-controls="series">
-				<i class="fas pr-3 fa-chart-line"></i>{%trans "Timeseries"%}
-			</a>
-			<div class="collapse hide" id="series">
-			</div>
-			{% endif %}
+		<ul id="list" class="list-group scroll col-sm-2 pr-0">
 			<a class="list-group-item active" data-toggle="collapse" href="#layers" aria-expanded="true" aria-controls="layers">
-				<i class="fas pr-3 fa-layer-group"></i>{%trans "Layers"%}<i class="fas fa-list float-right" title="show legends"></i>
+				<i class="fas pr-3 fa-layer-group"></i>{%trans "Layers"%}<span id="layercount" class="float-right badge badge-light"></span>
 			</a>
 			<div class="collapse show" id="layers">
 				{% for layer in object.map.layer_set.all %}
@@ -87,6 +91,13 @@ function toggle(layer) {
 				{% endwith %}
 				{% endfor %}
 			</div>
+			{% if object.timeseries %}
+			<a class="list-group-item active" data-toggle="collapse" href="#series" aria-expanded="true" aria-controls="series">
+				<i class="fas pr-3 fa-chart-line"></i>{%trans "Timeseries"%}<span id="itemcount" class="float-right badge badge-light"></span>
+			</a>
+			<div class="collapse hide" id="series">
+			</div>
+			{% endif %}
 		</ul>
 		{% endblock list %}
 	</div>

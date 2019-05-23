@@ -8,13 +8,15 @@ from django.utils.translation import gettext_lazy as _
 from wms.models import Layer as WMSLayer
 from django.utils.text import slugify
 import json
+from django.dispatch import receiver
+from django.db.models.signals import pre_save
    
 class Timeseries(models.Model):
     name = models.CharField(_('name'),max_length=100,unique=True)
     server = models.URLField(_('server'))
-    locations = models.CharField(_('locations'),max_length=100,default='locs/')
-    popup = models.CharField(_('popup'),max_length=100,default='pop/{id}/')
-    chart = models.CharField(_('chart'),max_length=100,default='net/chart/{id}/')
+    locations = models.CharField(_('locations'),max_length=100)
+    popup = models.CharField(_('popup'),max_length=100)
+    chart = models.CharField(_('chart'),max_length=100)
 
     def __str__(self):
         return self.name
@@ -63,16 +65,19 @@ class Layer(models.Model):
         return '{}'.format(self.layer)
 
 class Project(models.Model):
-    slug = models.SlugField()
-    name = models.CharField(_('name'),max_length=100,unique=True)
+    slug = models.SlugField(help_text=_('Short name for url'))
+    name = models.CharField(_('name'),max_length=100,unique=True,help_text=_('Descriptive name of project'))
+    title = models.CharField(_('tile'),max_length=100,help_text=_('Title on browser page'))
+    logo = models.ImageField(_('logo'),upload_to='logos',null=True,blank=True)
     map = models.ForeignKey(Map,models.SET_NULL,null=True,blank=True,verbose_name=_('map'))
     timeseries = models.ForeignKey(Timeseries,models.SET_NULL,null=True,blank=True,verbose_name=_('timeseries'))
                                    
     def __str__(self):
         return self.name
 
-    def save(self, force_insert=False, force_update=False, using=None, 
-        update_fields=None):
-        if self.slug is None:
-            self.slug = slugify(self.name)
-        return models.Model.save(self, force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields)
+@receiver(pre_save, sender=Project)
+def project_save(sender, instance, **kwargs):
+    if instance.slug is None:
+        instance.slug = slugify(instance.name)
+    
+    
