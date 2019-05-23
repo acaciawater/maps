@@ -25,5 +25,4 @@ class TimeseriesAdmin(admin.ModelAdmin):
 @register(Project)
 class ProjectAdmin(admin.ModelAdmin):
     model = Project
-    exclude = ('slug',)
-    
+   
