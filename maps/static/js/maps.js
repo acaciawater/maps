@@ -22,7 +22,7 @@ function changeBaseLayer(e) {
 }
 
 function restoreMap(map) {
-	succes = false;
+	let succes = false;
 //	var items = storage.getItem('overlays');
 //	if (items) {
 //		let names = new Set(JSON.parse(items));
@@ -67,48 +67,14 @@ var redBullet = L.icon({
 var theMap = null;
 var markers = []; // Should be associative array: {} ??
 
-function addMarkers(map,options,zoom) {
-	const locurl = options.url + options.locs;
-	$.getJSON(locurl, function(data) {
-		bounds = new L.LatLngBounds();
-		$.each(data, function(key,val) {
-			marker = L.marker([val.lat, val.lon],{title:val.name, icon: redBullet});
-			markers[val.id] = marker;
-			marker.bindPopup("Loading...",{maxWidth: "auto"});
-			marker.bindTooltip(val.name,{permanent:true,className:"label",opacity:0.7,direction:"top",offset:[0,-10]});
-			marker.on("click", function(e) {
-				const popup = e.target.getPopup();
-				// construct popup url at remote site
-				const popurl = options.url+options.pop+val.id;
-				// retrieve popup content from remote site
-			    $.get(popurl)
-				    .done(function(data) {
-				    	// convert paths like href="/net/.." or src="/static/.." to urls using options.url as base
-				    	data = data.replace(/(((href|src)=['"])\/)/g,'$2'+options.url+'/');
-				        popup.setContent(data);
-				        popup.update();
-				    })
-				    .fail(function() {
-				    	popup.closePopup();
-				    });
-			});
-			marker.addTo(map);
-			bounds.extend(marker.getLatLng());
-		});
-		if (zoom) { 
-			map.fitBounds(bounds);
-		}
-	});
-}
-
 /**
- * Adds a location item to the map 
+ * Adds a location item (marker) to the map 
  * @param map
  * @param item
  * @returns
  */
 function addItemToMap(item, map, urls) {
-	marker = L.marker([item.lat, item.lon],{title:item.name, icon:redBullet});
+	let marker = L.marker([item.lat, item.lon],{title:item.name, icon:redBullet});
 	markers[item.id] = marker;
 	marker.bindPopup("Loading...",{maxWidth: "auto"});
 	marker.bindTooltip(item.name,{permanent:true,className:"label",opacity:0.7,direction:"top",offset:[0,-10]});
@@ -157,6 +123,42 @@ function addItems(map,list,urls) {
 		});
 		return data;
 	});
+}
+
+var overlayLayers = [];
+
+function toggleLayer(id) {
+	const layer = overlayLayers[id];
+	if (layer.options.visible) {
+		theMap.remove(layer);
+		layer.options.visible = false;
+	}
+	else {
+		theMap.add(layer);
+		layer.options.visible = true;
+	}
+}
+
+async function addOverlays(map, list, layers) {
+	overlayLayers = [];
+	$.each(layers, (name, layer) => {
+		const overlay = L.tileLayer.wms(layer.url, layer);
+		const id = overlayLayers.push(overlay);
+		map.layerControl.addOverlay(overlay,name);
+		if (layer.visible) {
+			overlay.addTo(map);
+		}
+		list.append(`<li class="list-group-item">
+			${name}
+			<a data-toggle="collapse" href="#leg${id}">
+				<i class="fas fa-list float-right" title="toggle legend"></i>
+			</a>
+			<div class="collapse hide" id="leg${id}">
+				<img src="${layer.legend}"></img>
+			</div>
+		</li>`);
+	});
+	return overlayLayers;
 }
 
 var hilite = null;

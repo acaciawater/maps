@@ -53,12 +53,16 @@ class Layer(models.Model):
             'format': self.format,
             'visible': self.visible,
             'transparent': self.transparent,
-            'opacity': float(self.opacity)
+            'opacity': float(self.opacity),
             }
         if self.minzoom:
             ret['minZoom'] = self.minzoom
         if self.maxzoom:
             ret['maxZoom'] = self.maxzoom
+        try:
+            ret['legend'] = self.layer.legend_url()
+        except:
+            ret['legend'] = ''
         return ret
 
     def __str__(self):
