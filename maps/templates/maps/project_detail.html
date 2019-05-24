@@ -27,40 +27,23 @@
 $(function() {
 	const options = {{options|safe}};
 	const map = initMap('map',options);
-	const control = map.layerControl
+	
 	const layers = {{object.map.asjson|safe}};
-	let count = 0;
-	$.each(layers, (name, options) => {
-		let overlay = L.tileLayer.wms(options.url, options);
-		control.addOverlay(overlay,name);
-		if (options.visible) {
-			overlay.addTo(map);
-			count++;
-		}
-	});
-	$("#layercount").html(`${count}`);
+	addOverlays(map, $("#layers"), layers)
+		.then(overlays => {
+			$("#layercount").html(`${overlays.length}`);
+		});
  	$("#list").height($("#map").height());
 
 {% if urls %}
  	const urls = {{urls|safe}};
-	if (urls) {
-		addItems(map, $("#series"), urls)
-			.then(items => {
-				$("#itemcount").html(`${items.length}`);
-			});
-	}
+	addItems(map, $("#series"), urls)
+		.then(items => {
+			$("#itemcount").html(`${items.length}`);
+		});
 {% endif %}
 
 });
-
-function toggle(layer) {
-	let map = theMap;
-	let control = map.layerControl;
-	layer.visible = !layer.visible;
-	if (layer.visible) {
-		// TODO: finish		
-	}
-}
 
 </script>
 {% endblock %}
@@ -71,29 +54,13 @@ function toggle(layer) {
 		{% block list %}
 		<ul id="list" class="list-group scroll col-sm-2 pr-0">
 			<a class="list-group-item active" data-toggle="collapse" href="#layers" aria-expanded="true" aria-controls="layers">
-				<i class="fas pr-3 fa-layer-group"></i>{%trans "Layers"%}<span id="layercount" class="float-right badge badge-light"></span>
+				<i class="fas pr-3 fa-layer-group"></i>{%trans "Layers"%}<span id="layercount" class="float-right badge badge-light">...</span>
 			</a>
 			<div class="collapse show" id="layers">
-				{% for layer in object.map.layer_set.all %}
-				{% with name=layer.layer.title id=forloop.counter %}
-				<li class="list-group-item">
-					{% if layer.visible %}
-						<i class="fas pr-1 fa-check" style="color:black" onclick="toggle(layer);"></i>
-					{% else %}
-						<i class="fas pr-1 fa-check" style="color:lightgray" onclick="toggle(layer);"></i>
-					{% endif %}
-					{{name}}
-					<a data-toggle="collapse" href="#leg{{id}}"><i class="fas fa-list float-right" title="toggle {{name}} legend"></i></a>
-					<div class="collapse hide" id="leg{{id}}">
-					<img src="{{layer.layer.legend_url}}"></img>
-					</div>
-				</li>
-				{% endwith %}
-				{% endfor %}
 			</div>
 			{% if object.timeseries %}
 			<a class="list-group-item active" data-toggle="collapse" href="#series" aria-expanded="true" aria-controls="series">
-				<i class="fas pr-3 fa-chart-line"></i>{%trans "Timeseries"%}<span id="itemcount" class="float-right badge badge-light"></span>
+				<i class="fas pr-3 fa-chart-line"></i>{%trans "Timeseries"%}<span id="itemcount" class="float-right badge badge-light">...</span>
 			</a>
 			<div class="collapse hide" id="series">
 			</div>

@@ -10,6 +10,7 @@ from django.utils.text import slugify
 import json
 from django.dispatch import receiver
 from django.db.models.signals import pre_save
+import collections
    
 class Timeseries(models.Model):
     name = models.CharField(_('name'),max_length=100,unique=True)
@@ -25,7 +26,7 @@ class Map(models.Model):
     name = models.CharField(_('name'),max_length=100,unique=True)
 
     def asjson(self):
-        retval = {}
+        retval = collections.OrderedDict()
         for layer in self.layer_set.order_by('order'):
             retval[layer.layer.title]=layer.asjson()
         return json.dumps(retval)
