@@ -117,10 +117,13 @@ function addItemToList(item, list) {
 
 function addItems(map,list,urls) {
 	return $.getJSON(urls.items).then(data => {
+		let bounds = new L.LatLngBounds();
 		$.each(data, (key,item) => {
-			addItemToMap(item, map, urls);
+			const marker = addItemToMap(item, map, urls);
+			bounds.extend(marker.getLatLng());
 			addItemToList(item, list);
 		});
+		map.fitBounds(bounds);
 		return data;
 	});
 }

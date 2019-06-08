@@ -25,11 +25,24 @@ class Timeseries(models.Model):
 class Map(models.Model):
     name = models.CharField(_('name'),max_length=100,unique=True)
 
-    def asjson(self):
+    def layers(self):
         retval = collections.OrderedDict()
         for layer in self.layer_set.order_by('order'):
             retval[layer.layer.title]=layer.asjson()
         return json.dumps(retval)
+    
+    def extent(self):
+        map_extent = []
+        for layer in self.layer_set.filter(use_extent=True):
+            bbox = layer.layer.extent()
+            if map_extent:
+                map_extent[0] = min(bbox[0], map_extent[0])
+                map_extent[1] = min(bbox[1], map_extent[1])
+                map_extent[2] = max(bbox[2], map_extent[2])
+                map_extent[3] = max(bbox[3], map_extent[3])
+            else:
+                map_extent = list(bbox)
+        return map_extent
     
     def __str__(self):
         return self.name
@@ -40,14 +53,19 @@ class Layer(models.Model):
     order = models.SmallIntegerField(_('order'))
     visible = models.BooleanField(_('visible'), default=True)    
     visible.boolean = True
+    use_extent = models.BooleanField(default=True,verbose_name=_('Use extent'))
     format = models.CharField(_('format'), max_length=50,default='image/png')
     minzoom = models.SmallIntegerField(_('maxzoom'),null=True, blank=True)
     maxzoom = models.SmallIntegerField(_('minzoom'),null=True, blank=True)
     transparent = models.BooleanField(_('transparent'), default=True)
     transparent.Boolean = True
     opacity = models.DecimalField(_('opacity'), max_digits=4, decimal_places=1, default=1.0)
+#     extent = models.CharField(_('extent'), max_length=50, default = '[]', verbose_name=_('bounding box in LatLng coordinates'))
 
     def asjson(self):
+        '''
+        returns json dict for L.tileLayer.wms
+        '''
         ret = {
             'url': self.layer.server.url,
             'layers': self.layer.layername,

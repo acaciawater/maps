@@ -17,6 +17,7 @@ class ProjectDetailView(DetailView):
         context['api_key'] = settings.GOOGLE_MAPS_API_KEY
         context['options'] = {'zoom': 12, 'center': [52,5]}
         project = self.get_object()
+        context['extent'] = project.map.extent()
         if project.timeseries:
             series = project.timeseries
             context['urls'] = json.dumps({'server': series.server, 'items': series.locations, 'popup': series.popup, 'chart':series.chart})

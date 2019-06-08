@@ -51,7 +51,11 @@ class Layer(models.Model):
     def details(self):
         for _key, value in self.server.layerDetails(self.layername).items():
             return value
-         
+    
+    def extent(self):
+        details = self.details()
+        return details.boundingBoxWGS84
+    
     def legend_url(self, style='default'):
         return self.details().styles[style]['legend']
 
