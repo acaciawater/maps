@@ -32,8 +32,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'corsheaders',
-    'maps',
-    'wms',
+    'maps.apps.MapsConfig',
+    'wms.apps.WmsConfig',
 ]
 
 MIDDLEWARE = [

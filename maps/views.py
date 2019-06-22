@@ -18,7 +18,8 @@ class ProjectDetailView(DetailView):
         context['options'] = {'zoom': 12, 'center': [52,5]}
         project = self.get_object()
         context['extent'] = project.map.extent()
+        context['mapid'] = project.map.id
         if project.timeseries:
             series = project.timeseries
-            context['urls'] = json.dumps({'server': series.server, 'items': series.locations, 'popup': series.popup, 'chart':series.chart})
+            context['series'] = json.dumps({'server': series.server, 'items': series.locations, 'popup': series.popup, 'chart':series.chart})
         return context

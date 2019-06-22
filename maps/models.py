@@ -21,7 +21,10 @@ class Timeseries(models.Model):
 
     def __str__(self):
         return self.name
-       
+    
+    class Meta:
+        verbose_name_plural = 'Timeseries'
+        
 class Map(models.Model):
     name = models.CharField(_('name'),max_length=100,unique=True)
 
@@ -46,21 +49,36 @@ class Map(models.Model):
     
     def __str__(self):
         return self.name
-       
+
+    def get_absolute_url(self):
+        pass
+    
+# class Group(models.Model):
+#     name = models.CharField(_('group'), max_length=100)
+           
 class Layer(models.Model): 
     map = models.ForeignKey(Map, models.CASCADE, verbose_name=_('map'))
     layer = models.ForeignKey(WMSLayer, models.CASCADE, verbose_name=_('WMS layer'),null=True)
+#     group = models.ForeignKey(Group, models.CASCADE, verbose_name=_('group'))
     order = models.SmallIntegerField(_('order'))
     visible = models.BooleanField(_('visible'), default=True)    
     visible.boolean = True
-    use_extent = models.BooleanField(default=True,verbose_name=_('Use extent'))
     format = models.CharField(_('format'), max_length=50,default='image/png')
-    minzoom = models.SmallIntegerField(_('maxzoom'),null=True, blank=True)
-    maxzoom = models.SmallIntegerField(_('minzoom'),null=True, blank=True)
+    minzoom = models.SmallIntegerField(_('minzoom'),null=True, blank=True)
+    maxzoom = models.SmallIntegerField(_('maxzoom'),null=True, blank=True)
     transparent = models.BooleanField(_('transparent'), default=True)
     transparent.Boolean = True
     opacity = models.DecimalField(_('opacity'), max_digits=4, decimal_places=1, default=1.0)
-#     extent = models.CharField(_('extent'), max_length=50, default = '[]', verbose_name=_('bounding box in LatLng coordinates'))
+
+    use_extent = models.BooleanField(default=True,verbose_name=_('Use extent'))
+    clickable = models.BooleanField(default=False,verbose_name=_('clickable'),help_text=_('show popup with info when layer is clicked'))
+    clickable.boolean = True
+    properties = models.CharField(_('properties'), max_length=200, null=True, blank=True, help_text=_('comma separated list of properties to display when layer is clicked')) 
+
+    allow_download = models.BooleanField(default=False,verbose_name=_('downloadable'), help_text=_('user can download this layer'))
+    allow_download.Boolean=True
+    download_url = models.URLField(_('download url'),null=True,blank=True,help_text=_('url for download of entire layer'))
+    stylesheet = models.URLField(_('stylesheet'),null=True, blank=True, help_text=_('url of stylesheet for GetFeatureInfo response'))
 
     def asjson(self):
         '''
@@ -73,7 +91,15 @@ class Layer(models.Model):
             'visible': self.visible,
             'transparent': self.transparent,
             'opacity': float(self.opacity),
+            'clickable': self.clickable,
+            'displayName': self.layer.title,
             }
+        if self.properties:
+            ret['propertyName'] = self.properties
+        if self.allow_download and self.download_url:
+            ret['downloadUrl'] = self.download_url
+        if self.stylesheet:
+            ret['stylesheet'] = self.stylesheet
         if self.minzoom:
             ret['minZoom'] = self.minzoom
         if self.maxzoom:
@@ -81,7 +107,7 @@ class Layer(models.Model):
         try:
             ret['legend'] = self.layer.legend_url()
         except:
-            ret['legend'] = ''
+            pass #ret['legend'] = ''
         return ret
 
     def __str__(self):
@@ -97,7 +123,10 @@ class Project(models.Model):
                                    
     def __str__(self):
         return self.name
-
+    
+    class Meta:
+        app_label = 'maps'
+        
 @receiver(pre_save, sender=Project)
 def project_save(sender, instance, **kwargs):
     if instance.slug is None:

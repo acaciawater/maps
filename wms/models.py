@@ -3,8 +3,6 @@ from django.utils.translation import gettext_lazy as _
 from owslib.wms import WebMapService
 
 WMS_VERSIONS=(
-    ('1.0.0','1.0.0'),
-    ('1.1.0','1.1.0'),
     ('1.1.1','1.1.1'),
     ('1.3.0','1.3.0'),
     )
@@ -32,7 +30,20 @@ class Server(models.Model):
     def enumLayers(self):
         for layer in self.service().contents:
             yield layer
-
+            
+    def getFeatureInfo(self,layers,xy,srs='EPSG:3857'):
+        x,y = xy
+        response = self.service().getfeatureinfo(
+            layers=layers,
+            srs=srs,
+            bbox=(x-1,y-1,x+1,y+1),
+            size=(3,3),
+            format='image/jpeg',
+            query_layers=layers,
+            info_format="text/html",
+            xy=(1,1))
+        return response 
+       
     class Meta:
         verbose_name = _('WMS-Server')
     

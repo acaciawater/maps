@@ -16,7 +16,7 @@
 	{% block style %}
 	<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
 	<link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
-
+	<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous"/>
     <style>
     html, body {
     	height: 100%;
@@ -24,6 +24,11 @@
     .logo {
       height: 72px;
     }
+    a.cog {
+      color: white;
+      text-decoration: none;
+    }
+    
     </style>
 
 	{% endblock %}
@@ -33,6 +38,7 @@
     {% block header %}
     <nav class="navbar navbar-dark bg-dark">
     <span class=""><img class="logo" src="/static/default-logo.png"></img></span>
+	<a class="cog fas fa-cog fa-2x float-right" href="/admin" title="Admin page"></a>
     </nav>
     {% endblock header %}
     {% block content %}

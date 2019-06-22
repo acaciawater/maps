@@ -6,11 +6,20 @@ from maps.models import Project, Timeseries
 @register(Layer)
 class LayerAdmin(admin.ModelAdmin):
     model = Layer
-    list_display = ('layer','minzoom','maxzoom','opacity','map','visible')
+    fields = (('layer','map'),
+              ('order','visible','use_extent'),
+              ('opacity','transparent'),
+              ('minzoom','maxzoom'),
+              ('properties','clickable'),
+              'stylesheet',
+              ('download_url','allow_download'),
+              )
+    list_filter = ('map','layer__server','allow_download')
+    list_display = ('layer','map')
         
 class LayerInline(admin.TabularInline):
     model = Layer
-    list_display = ('layer', 'visible')
+    fields = ('layer', 'order', 'visible', 'clickable', 'allow_download', 'opacity')
     extra = 0
 
 @register(Map)
@@ -25,4 +34,3 @@ class TimeseriesAdmin(admin.ModelAdmin):
 @register(Project)
 class ProjectAdmin(admin.ModelAdmin):
     model = Project
-   

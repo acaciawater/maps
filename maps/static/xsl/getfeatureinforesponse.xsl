@@ -2,7 +2,11 @@
 <xsl:stylesheet version="1.0"
 	xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
 	<xsl:template match="/ServiceExceptionReport">
-		<p>No data</p>
+		<html>
+			<body>
+				<p>Service Exception!</p>
+			</body>
+		</html>
 	</xsl:template>
 	<xsl:template match="/GetFeatureInfoResponse">
 		<html>

@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% load i18n %}
+{% load i18n admin_urls %}
 {% block title %}{{object.title}} {% endblock %}
 {% block style %}
 {{ block.super }}
@@ -7,7 +7,6 @@
 <link rel="stylesheet" href="//unpkg.com/leaflet.markercluster@1.0.5/dist/MarkerCluster.css"/>
 <link rel="stylesheet" href="//unpkg.com/leaflet.markercluster@1.0.5/dist/MarkerCluster.Default.css"/>
 <link rel="stylesheet" href="//ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/themes/smoothness/jquery-ui.css">
-<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous"/>
 <link rel="stylesheet" href="/static/css/leaflet.wmslegend.css"/>
 <link rel="stylesheet" href="/static/css/maps.css"/>
 {% endblock %}
@@ -21,12 +20,13 @@
 <script src="//ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
 <script src="/static/js/leaflet.wmslegend.js"></script>
 <script src="/static/js/betterwms.js"></script>
+<script src="/static/js/xml2json.js"></script>
 <script src="/static/js/maps.js"></script>
 <script>
 
 $(function() {
 	const options = {{options|safe}};
-	const map = initMap('map',options);
+	const map = initMap('map',options,{{mapid}});
 	const extent = {{extent}};
 	const layers = {{object.map.layers|safe}};
 	addOverlays(map, $("#layers"), layers)
@@ -37,9 +37,9 @@ $(function() {
 		});
  	$("#list").height($("#map").height());
 
-{% if urls %}
- 	const urls = {{urls|safe}};
-	addItems(map, $("#series"), urls)
+{% if series %}
+ 	const series = {{series|safe}};
+	addItems(map, $("#series"), series)
 		.then(items => {
 			$("#itemcount").html(`${items.length}`);
 		});
@@ -49,6 +49,12 @@ $(function() {
 
 </script>
 {% endblock %}
+    {% block header %}
+    <nav class="navbar navbar-dark bg-dark">
+    <span class=""><img class="logo" src="/static/default-logo.png"></img></span>
+	<a class="cog fas fa-cog fa-2x float-right" href="/admin/maps/project/{{object.pk}}/change" title="Admin page"></a>
+    </nav>
+    {% endblock header %}
 {% block content %}
 <div class="full container-fluid">
 	<div class="full row row-fluid">
@@ -60,7 +66,7 @@ $(function() {
 			</a>
 			<div class="collapse show" id="layers">
 			</div>
-			{% if object.timeseries %}
+			{% if series %}
 			<a class="list-group-item active" data-toggle="collapse" href="#series" aria-expanded="true" aria-controls="series">
 				<i class="fas pr-3 fa-chart-line"></i>{%trans "Timeseries"%}<span id="itemcount" class="float-right badge badge-light">...</span>
 			</a>

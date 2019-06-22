@@ -43,12 +43,14 @@ function restoreMap(map) {
 }
 
 function saveBounds(map) {
-	var b = map.getBounds();
-	storage.setItem('bounds',b.toBBoxString());
+	const b = map.getBounds();
+	const key = `bounds${map.id}`;
+	storage.setItem(key,b.toBBoxString());
 }
 
 function restoreBounds(map) {
-	var b = storage.getItem('bounds');
+	const key = `bounds${map.id}`;
+	const b = storage.getItem(key);
 	if (b) {
 		corners = b.split(',').map(Number);
 		map.fitBounds([[corners[1],corners[0]],[corners[3],corners[2]]]);
@@ -145,21 +147,18 @@ function toggleLayer(id) {
 async function addOverlays(map, list, layers) {
 	overlayLayers = [];
 	$.each(layers, (name, layer) => {
-		const overlay = L.tileLayer.wms(layer.url, layer);
+		const overlay = L.tileLayer.betterWms(layer.url, layer);
 		const id = overlayLayers.push(overlay);
 		map.layerControl.addOverlay(overlay,name);
 		if (layer.visible) {
 			overlay.addTo(map);
 		}
-		list.append(`<li class="list-group-item">
-			${name}
-			<a data-toggle="collapse" href="#leg${id}">
-				<i class="fas fa-list float-right" title="toggle legend"></i>
-			</a>
-			<div class="collapse hide" id="leg${id}">
-				<img src="${layer.legend}"></img>
-			</div>
-		</li>`);
+		let item = `<li class="list-group-item"><a data-toggle="collapse" href="#leg${id}">${name}</a>`;
+		if (layer.downloadUrl) {
+			item += `<a href="${layer.downloadUrl}"><i class="fas fa-file-download float-right" title="download"></i></a>`
+		}
+		item += `<div class="collapse hide" id="leg${id}"><img src="${layer.legend}"></img></div></li>`;
+		list.append(item);
 	});
 	return overlayLayers;
 }
@@ -280,7 +279,7 @@ function toggleLabels() {
  * @options initial centerpoint and zoomlevel
  * @returns the map
  */
-function initMap(div,options) {
+function initMap(div,options,id) {
 	var osm = L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 		maxZoom: 19,
  		attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
@@ -303,8 +302,10 @@ function initMap(div,options) {
 	});
 	
 	var map = L.map(div,options);
-
- 	baseMaps = {'Openstreetmap': osm, 'Google wegenkaart': roads, 'Google satelliet': satellite, 'ESRI wegenkaart': topo, 'ESRI satelliet': imagery};
+	// assign id to map
+	map.id = id;
+	
+ 	baseMaps = {'Openstreetmap': osm, 'Google maps': roads, 'Google satellite': satellite, 'ESRI topo': topo, 'ESRI satellite': imagery};
 	overlayMaps = {};
 	map.layerControl = L.control.layers(baseMaps, overlayMaps).addTo(map);
 
