@@ -12,8 +12,24 @@ from django.dispatch import receiver
 from django.db.models.signals import pre_save
 import collections
 from django.urls.base import reverse
-   
-class Timeseries(models.Model):
+
+class MapsModel(models.Model):
+    '''
+    Abstract base model that adds 'app_label' and 'model_name' properties to model for use with admin:admin_urls template tag
+    '''
+    @property
+    def app_label(self):
+        return self._meta.app_label
+
+    @property
+    def model_name(self):
+        return self._meta.model_name
+
+    class Meta:
+        abstract = True
+        app_label = 'maps'
+        
+class Timeseries(MapsModel):
     name = models.CharField(_('name'),max_length=100,unique=True)
     server = models.URLField(_('server'))
     locations = models.CharField(_('locations'),max_length=100)
@@ -26,9 +42,10 @@ class Timeseries(models.Model):
     class Meta:
         verbose_name_plural = 'Timeseries'
         
-class Map(models.Model):
+class Map(MapsModel):
+    
     name = models.CharField(_('name'),max_length=100,unique=True)
-
+    
     def layers(self):
         retval = collections.OrderedDict()
         for layer in self.layer_set.order_by('order'):
@@ -53,11 +70,11 @@ class Map(models.Model):
 
     def get_absolute_url(self):
         return reverse('map-detail', args=[self.pk])        
-    
+
 # class Group(models.Model):
 #     name = models.CharField(_('group'), max_length=100)
            
-class Layer(models.Model): 
+class Layer(MapsModel): 
     map = models.ForeignKey(Map, models.CASCADE, verbose_name=_('map'))
     layer = models.ForeignKey(WMSLayer, models.CASCADE, verbose_name=_('WMS layer'),null=True)
 #     group = models.ForeignKey(Group, models.CASCADE, verbose_name=_('group'))
@@ -114,7 +131,7 @@ class Layer(models.Model):
     def __str__(self):
         return '{}'.format(self.layer)
 
-class Project(models.Model):
+class Project(MapsModel):
     slug = models.SlugField(help_text=_('Short name for url'))
     name = models.CharField(_('name'),max_length=100,unique=True,help_text=_('Descriptive name of project'))
     title = models.CharField(_('tile'),max_length=100,help_text=_('Title on browser page'))
@@ -128,9 +145,6 @@ class Project(models.Model):
     def __str__(self):
         return self.name
     
-    class Meta:
-        app_label = 'maps'
-        
 @receiver(pre_save, sender=Project)
 def project_save(sender, instance, **kwargs):
     if instance.slug is None:

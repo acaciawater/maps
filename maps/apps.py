@@ -7,4 +7,5 @@ from django.apps import AppConfig
 
 class MapsConfig(AppConfig):
     name = 'maps'
+    label = 'maps'
     verbose_name = 'maps'

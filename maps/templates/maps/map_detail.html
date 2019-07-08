@@ -51,7 +51,7 @@ $(function() {
     {% block header %}
     <nav class="navbar navbar-dark bg-dark">
     <span class=""><img class="logo" src="/static/default-logo.png"></img></span>
-	<a class="cog fas fa-cog fa-2x float-right" href="/admin/maps/project/{{object.pk}}/change" title="Admin page"></a>
+	<a class="cog fas fa-cog fa-2x float-right" href="{% url object|admin_urlname:'change' object.id %}" title="Admin page"></a>
     </nav>
     {% endblock header %}
 {% block content %}

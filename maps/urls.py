@@ -15,7 +15,7 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
-from maps.views import ProjectDetailView, MapDetailView
+from .views import ProjectDetailView, MapDetailView
 from django.urls.conf import include
 
 urlpatterns = [
