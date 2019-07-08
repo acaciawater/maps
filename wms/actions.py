@@ -7,6 +7,7 @@ from django.utils.translation import ugettext_lazy as _
 from django.contrib import messages
 
 def updateLayers(modeladmin, request, queryset):
+    # TODO: remove layers that no longer exist on server ??
     numCreated = 0
     for server in queryset:
         for layername, details in server.layerDetails().items():
