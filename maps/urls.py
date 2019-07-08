@@ -15,12 +15,13 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
-from maps.views import ProjectDetailView
+from maps.views import ProjectDetailView, MapDetailView
 from django.urls.conf import include
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('wms/', include('wms.urls')),
+    path('map/<int:pk>/', MapDetailView.as_view(),name='map-detail'),
     path('<int:pk>/', ProjectDetailView.as_view(),name='project-detail'),
     path('<slug:slug>/', ProjectDetailView.as_view(),name='project-detail'),
 ]

@@ -11,6 +11,7 @@ import json
 from django.dispatch import receiver
 from django.db.models.signals import pre_save
 import collections
+from django.urls.base import reverse
    
 class Timeseries(models.Model):
     name = models.CharField(_('name'),max_length=100,unique=True)
@@ -51,7 +52,7 @@ class Map(models.Model):
         return self.name
 
     def get_absolute_url(self):
-        pass
+        return reverse('map-detail', args=[self.pk])        
     
 # class Group(models.Model):
 #     name = models.CharField(_('group'), max_length=100)
@@ -120,7 +121,10 @@ class Project(models.Model):
     logo = models.ImageField(_('logo'),upload_to='logos',null=True,blank=True)
     map = models.ForeignKey(Map,models.SET_NULL,null=True,blank=True,verbose_name=_('map'))
     timeseries = models.ForeignKey(Timeseries,models.SET_NULL,null=True,blank=True,verbose_name=_('timeseries'))
-                                   
+                      
+    def get_absolute_url(self):
+        return reverse('project-detail', args=[self.pk])        
+
     def __str__(self):
         return self.name
     
