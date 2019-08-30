@@ -1,22 +1,23 @@
+# Create your models here.
 from django.db import models
 from django.utils.translation import gettext_lazy as _
-from owslib.wms import WebMapService
+from owslib.wfs import WebFeatureService
 
-WMS_VERSIONS=(
-    ('1.1.1','1.1.1'),
-    ('1.3.0','1.3.0'),
+WFS_VERSIONS=(
+    ('1.0.0','1.1.0'),
+    ('2.0.0','3.0.0'),
     )
 class Server(models.Model):
-    ''' WMS server '''
+    ''' WFS server '''
     name = models.CharField(_('name'), max_length=100, unique=True)
     url = models.URLField(_('url'), max_length=255)
-    version = models.CharField(_('version'), max_length=10, default='1.3.0',choices=WMS_VERSIONS)
+    version = models.CharField(_('version'), max_length=10, default='1.1.0',choices=WFS_VERSIONS)
     
     def __str__(self):
         return self.name
 
     def service(self):
-        return WebMapService(self.url, self.version)
+        return WebFeatureService(self.url, self.version)
     
     def layerDetails(self, layername = None):
         service = self.service()
@@ -25,10 +26,7 @@ class Server(models.Model):
             return {layer: service[layer] for layer in service.contents}
         else:
             # single layer
-            try:
-                return {layername: service[layername]}
-            except:
-                return {}
+            return {layername: service[layername]}
     
     def enumLayers(self):
         for layer in self.service().contents:
@@ -46,67 +44,39 @@ class Server(models.Model):
             layer, created = self.layer_set.get_or_create(layername=layername,defaults = {
                 'title': details.title or layername,
                 'attribution': details.attribution.get('title','') if hasattr(details,'attribution') else ''})
-            numCreated += 1
+            if created:
+                numCreated += 1
         return numCreated
                 
-    def getFeatureInfo(self,layers,xy,srs='EPSG:3857'):
-        x,y = xy
-        response = self.service().getfeatureinfo(
-            layers=layers,
-            srs=srs,
-            bbox=(x-1,y-1,x+1,y+1),
-            size=(3,3),
-            format='image/jpeg',
-            query_layers=layers,
-            info_format="text/html",
-            xy=(1,1))
-        return response 
+    def getFeature(self,**kwargs):
+        return self.service().getfeature(**kwargs)
        
     class Meta:
-        verbose_name = _('WMS-Server')
+        verbose_name = _('WFS-Server')
     
 class Layer(models.Model):
-    ''' Layer in a WMS server '''
+    ''' Layer in a WFS server '''
     layername = models.CharField(_('layername'), max_length=100)
     title = models.CharField(_('title'), max_length=100)
     server = models.ForeignKey(Server,models.CASCADE,verbose_name=_('WMS Server'))
     tiled = models.BooleanField(_('tiled'), default=True)
     tiled.Boolean=True
     attribution = models.CharField(_('attribution'),max_length=200,blank=True,null=True,default='')
-    bbox = models.CharField(_('extent'),max_length=100,null=True)
 
     def __str__(self):
         return '{}:{}'.format(self.server, self.title or self.layername)
 
     def details(self):
-        try:
-            for _key, value in self.server.layerDetails(self.layername).items():
-                return value
-        except:
-            return None
-    
-    def get_extent(self):
-        details = self.details()
-        return details.boundingBoxWGS84 if details else []
-    
-    def set_extent(self):
-        ext = self.get_extent()
-        self.bbox = ','.join(map(str,ext))
-        self.save(update_fields=('bbox',))
-        return ext
+        for _key, value in self.server.layerDetails(self.layername).items():
+            return value
     
     def extent(self):
-        if not self.bbox:
-            return self.set_extent()
-        else:
-            return list(map(float,self.bbox.split(',')))
+        details = self.details()
+        return details.boundingBoxWGS84
     
     def legend_url(self, style='default'):
-        try:
-            return self.details().styles[style]['legend']
-        except:
-            return None
+        return self.details().styles[style]['legend']
 
-class Meta:
+    class Meta:
         verbose_name = _('WMS-Layer')
     

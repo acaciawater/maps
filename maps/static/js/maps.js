@@ -144,23 +144,29 @@ function toggleLayer(id) {
 	}
 }
 
-async function addOverlays(map, list, layers) {
-	overlayLayers = [];
-	$.each(layers, (name, layer) => {
+async function addOverlay(map, layer, name) {
+	if (layer) {
 		const overlay = L.tileLayer.betterWms(layer.url, layer);
-		const id = overlayLayers.push(overlay);
 		map.layerControl.addOverlay(overlay,name);
 		if (layer.visible) {
 			overlay.addTo(map);
 		}
-		let item = `<li class="list-group-item"><a data-toggle="collapse" href="#leg${id}">${name}</a>`;
-		if (layer.downloadUrl) {
-			item += `<a href="${layer.downloadUrl}"><i class="fas fa-file-download float-right" title="download"></i></a>`
-		}
-		item += `<div class="collapse hide" id="leg${id}"><img src="${layer.legend}"></img></div></li>`;
-		list.append(item);
+	}
+}
+
+async function addOverlays(map, list, layers) {
+	$.each(layers, (name, layer) => {
+		addOverlay(map, layer, name).then(overlay => {
+			const id = overlayLayers.push(overlay);
+			let item = `<li class="list-group-item"><a data-toggle="collapse" href="#leg${id}">${name}</a>`;
+			if (layer.downloadUrl) {
+				item += `<a href="${layer.downloadUrl}"><i class="fas fa-file-download float-right" title="download"></i></a>`
+			}
+			item += `<div class="collapse hide" id="leg${id}"><img src="${layer.legend}"></img></div></li>`;
+			list.append(item);
+		});
+
 	});
-	return overlayLayers;
 }
 
 var hilite = null;

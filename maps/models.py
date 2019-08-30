@@ -5,7 +5,7 @@ Created on May 20, 2019
 '''
 from django.db import models
 from django.utils.translation import gettext_lazy as _
-from wms.models import Layer as WMSLayer
+from wms.models import Layer as WMSLayer, Server
 from django.utils.text import slugify
 import json
 from django.dispatch import receiver
@@ -45,39 +45,99 @@ class Timeseries(MapsModel):
 class Map(MapsModel):
     
     name = models.CharField(_('name'),max_length=100,unique=True)
-    
+    bbox = models.CharField(_('extent'),max_length=100,null=True,blank=True)
+
     def layers(self):
         retval = collections.OrderedDict()
         for layer in self.layer_set.order_by('order'):
             retval[layer.layer.title]=layer.asjson()
         return json.dumps(retval)
-    
-    def extent(self):
+
+    def groups(self):
+        groups = {}
+
+        ungrouped = self.layer_set.filter(groups__isnull=True).order_by('order').prefetch_related('groups')
+        if ungrouped:
+            groups['Layers'] = collections.OrderedDict()
+            for layer in ungrouped:
+                groups['Layers'][layer.layer.title]=layer.asjson()
+            
+        for group in self.group_set.order_by('name').prefetch_related('layers'):
+            groups[group.name] = collections.OrderedDict()
+            for layer in group.layers.order_by('order'):
+                groups[group.name][layer.layer.title]=layer.asjson()
+
+        return json.dumps(groups)
+                
+            
+    def get_extent(self):
         map_extent = []
-        for layer in self.layer_set.filter(use_extent=True):
-            bbox = layer.layer.extent()
-            if map_extent:
-                map_extent[0] = min(bbox[0], map_extent[0])
-                map_extent[1] = min(bbox[1], map_extent[1])
-                map_extent[2] = max(bbox[2], map_extent[2])
-                map_extent[3] = max(bbox[3], map_extent[3])
-            else:
-                map_extent = list(bbox)
+        for layer in self.layer_set.exclude(use_extent=False):
+            bbox = layer.extent()
+            if bbox:
+                if map_extent:
+                    map_extent[0] = min(bbox[0], map_extent[0])
+                    map_extent[1] = min(bbox[1], map_extent[1])
+                    map_extent[2] = max(bbox[2], map_extent[2])
+                    map_extent[3] = max(bbox[3], map_extent[3])
+                else:
+                    map_extent = list(bbox)
         return map_extent
     
+    def set_extent(self):
+        ext = self.get_extent()
+        self.bbox = ','.join(map(str,ext))
+        self.save(update_fields=('bbox',))
+        return ext
+    
+    def extent(self):
+        if not self.bbox:
+            return self.set_extent()
+        else:
+            return list(map(float,self.bbox.split(',')))
+      
     def __str__(self):
         return self.name
 
     def get_absolute_url(self):
         return reverse('map-detail', args=[self.pk])        
 
-# class Group(models.Model):
-#     name = models.CharField(_('group'), max_length=100)
-           
+class Mirror(Map):
+
+    server = models.ForeignKey(Server,on_delete=models.CASCADE)
+    
+    def update_layers(self):
+        # update layer list on WMS server
+        self.server.updateLayers()
+        
+        # update layer list of this map
+        self.layer_set.all().delete()
+        index = 0
+        for layer in self.server.layer_set.all():
+            self.layer_set.create(layer=layer,order=index,use_extent=False)
+            index += 1
+        return index
+
+class Group(models.Model):
+    name = models.CharField(_('group'), max_length=100)
+    map = models.ForeignKey(Map,on_delete=models.CASCADE)
+    layers = models.ManyToManyField('maps.Layer',blank=True)
+
+    def layer_count(self):
+        return self.layers.count()
+        
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        verbose_name = _('group')
+        verbose_name_plural = _('groups')
+        unique_together = ('name','map')
+        
 class Layer(MapsModel): 
     map = models.ForeignKey(Map, models.CASCADE, verbose_name=_('map'))
     layer = models.ForeignKey(WMSLayer, models.CASCADE, verbose_name=_('WMS layer'),null=True)
-#     group = models.ForeignKey(Group, models.CASCADE, verbose_name=_('group'))
+    groups = models.ManyToManyField(Group, blank=True, verbose_name=_('group'), through='maps.group_layers')
     order = models.SmallIntegerField(_('order'))
     visible = models.BooleanField(_('visible'), default=True)    
     visible.boolean = True
@@ -98,6 +158,12 @@ class Layer(MapsModel):
     download_url = models.URLField(_('download url'),null=True,blank=True,help_text=_('url for download of entire layer'))
     stylesheet = models.URLField(_('stylesheet'),null=True, blank=True, help_text=_('url of stylesheet for GetFeatureInfo response'))
 
+    def group_names(self):
+        return ','.join(map(str,self.groups.values_list('name',flat=True)))
+
+    def extent(self):
+        return self.layer.extent()
+    
     def asjson(self):
         '''
         returns json dict for L.tileLayer.wms
@@ -149,5 +215,4 @@ class Project(MapsModel):
 def project_save(sender, instance, **kwargs):
     if instance.slug is None:
         instance.slug = slugify(instance.name)
-    
     

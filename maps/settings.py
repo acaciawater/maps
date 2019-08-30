@@ -21,6 +21,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
+SITE_ID = 1
 
 # Application definition
 
@@ -34,6 +35,8 @@ INSTALLED_APPS = [
     'django.contrib.sites',
     'maps.apps.MapsConfig',
     'wms.apps.WmsConfig',
+    'wfs.apps.WfsConfig',
+    'debug_toolbar',
 ]
 
 MIDDLEWARE = [
@@ -44,6 +47,11 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'debug_toolbar.middleware.DebugToolbarMiddleware',
+]
+
+INTERNAL_IPS = [
+    '127.0.0.1',
 ]
 
 ROOT_URLCONF = 'maps.urls'
@@ -66,16 +74,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'maps.wsgi.application'
 
-
-# Database
-# https://docs.djangoproject.com/en/2.2/ref/settings/#databases
-
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
-    }
-}
 
 
 # Password validation
