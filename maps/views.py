@@ -8,6 +8,8 @@ from django.conf import settings
 from .models import Project, Map
 from django.views.generic.detail import DetailView
 import json
+from django.shortcuts import get_object_or_404
+from django.http.response import HttpResponse
 
 class MapDetailView(DetailView):
     model = Map
@@ -38,3 +40,32 @@ class ProjectDetailView(MapDetailView):
             context['series'] = json.dumps({'server': series.server, 'items': series.locations, 'popup': series.popup, 'chart':series.chart})
         return context
 
+def reorder1(request, pk):
+    ''' reorder layers in map
+        request.body result of jQuery.sortable('serialize') 
+        is something like b'item=1&item=2....'
+    '''
+    mapObject = get_object_or_404(Map,pk=pk)
+    items = request.body.decode('utf-8').split('&')
+    order = map(lambda item: int(item.split('=')[1]), items)
+    layers = list(mapObject.layer_set.order_by('order'))
+    for index, item in enumerate(order):
+        layer = layers[item-1]
+        if layer.order != index:
+            layer.order = index
+            layer.save(update_fields=('order',))
+    return HttpResponse(status=200)
+
+def reorder(request, pk):
+    ''' reorder layers in map
+        request.body contains names of layers as json array in proper order 
+        is something like ["suitability","ndvi",,...]
+    '''
+    mapObject = get_object_or_404(Map,pk=pk)
+    items = json.loads(request.body)
+    for index, item in enumerate(items):
+        layer = mapObject.layer_set.get(layer__title=item)
+        if layer.order != index:
+            layer.order = index
+            layer.save(update_fields=('order',))
+    return HttpResponse(status=200)

@@ -15,13 +15,14 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
-from .views import ProjectDetailView, MapDetailView
+from .views import ProjectDetailView, MapDetailView, reorder
 from django.urls.conf import include
 from django.conf import settings
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('wms/', include('wms.urls')),
+    path('map/<int:pk>/reorder/', reorder,name='map-reorder'),
     path('map/<int:pk>/', MapDetailView.as_view(),name='map-detail'),
     path('<int:pk>/', ProjectDetailView.as_view(),name='project-detail'),
     path('<slug:slug>/', ProjectDetailView.as_view(),name='project-detail'),

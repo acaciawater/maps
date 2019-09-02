@@ -131,42 +131,53 @@ function addItems(map,list,urls) {
 }
 
 var overlayLayers = [];
+const icon_visible = 'far fa-check-square';
+const icon_invisible = 'far fa-square';
 
 function toggleLayer(id) {
 	const layer = overlayLayers[id];
+	const icon_element = $(`#item_${id} .statusicon`);
 	if (layer.options.visible) {
-		theMap.remove(layer);
+		theMap.removeLayer(layer);
 		layer.options.visible = false;
+		icon_element.removeClass(icon_visible).addClass(icon_invisible);
 	}
 	else {
-		theMap.add(layer);
+		theMap.addLayer(layer);
 		layer.options.visible = true;
+		icon_element.removeClass(icon_invisible).addClass(icon_visible);
 	}
 }
 
 async function addOverlay(map, layer, name) {
 	if (layer) {
 		const overlay = L.tileLayer.betterWms(layer.url, layer);
-		map.layerControl.addOverlay(overlay,name);
+//		map.layerControl.addOverlay(overlay,name);
 		if (layer.visible) {
 			overlay.addTo(map);
 		}
+		return overlay;
 	}
 }
 
 async function addOverlays(map, list, layers) {
+	let promises = [];
 	$.each(layers, (name, layer) => {
-		addOverlay(map, layer, name).then(overlay => {
-			const id = overlayLayers.push(overlay);
-			let item = `<li class="list-group-item"><a data-toggle="collapse" href="#leg${id}">${name}</a>`;
+		const p = addOverlay(map, layer, name).then(overlay => {
+			const id = overlayLayers.push(overlay)-1;
+			const icon = layer.visible? icon_visible: icon_invisible;
+			let item = `<li id=item_${id} class="list-group-item">
+				<i class="statusicon pr-2 pl-0 pt-1 ${icon} float-left" onclick="toggleLayer(${id})"></i>
+				<div data-toggle="collapse" href="#legend_${id}">${name}</div>`;
 			if (layer.downloadUrl) {
 				item += `<a href="${layer.downloadUrl}"><i class="fas fa-file-download float-right" title="download"></i></a>`
 			}
-			item += `<div class="collapse hide" id="leg${id}"><img src="${layer.legend}"></img></div></li>`;
+			item += `<div class="collapse hide" id="legend_${id}"><img src="${layer.legend}"></img></div></li>`;
 			list.append(item);
 		});
-
+		promises.push(p);
 	});
+	return promises;
 }
 
 var hilite = null;
@@ -322,7 +333,7 @@ function initMap(div,options,id) {
 	
 	restoreBounds(map);
 
-	var control = L.control.labelcontrol({ position: 'topleft' }).addTo(map);
+//	var control = L.control.labelcontrol({ position: 'topleft' }).addTo(map);
 
 	map.on('baselayerchange',function(e){changeBaseLayer(e);});
  	map.on('overlayadd',function(e){addOverlay(e);});

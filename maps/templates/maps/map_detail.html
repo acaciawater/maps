@@ -23,17 +23,17 @@
 <script src="/static/js/xml2json.js"></script>
 <script src="/static/js/maps.js"></script>
 <script>
-$(function() {
-	const options = {{options|safe}};
-	const map = initMap('map',options,{{map.id}});
-	const extent = {{extent}};
-	if (extent.length === 4) {
-		const bounds = L.latLngBounds([extent[1],extent[0]],[extent[3],extent[2]]);
-		map.fitBounds(bounds);
-	}
-	const groups = {{map.groups|safe}};
-	const list = $("#list");
+
+function getCookie(cookie) {
+	const cookies = decodeURIComponent(document.cookie).split(';')
+		.map(token => token.trim())
+		.filter(token => token.startsWith(cookie));
+	return cookies.length==1? cookies[0].substring(cookie.length+1): "";
+}
+	
+async function addAllOverlays(groups, map, list) {
 	let id = 0;
+	let promises = [];
 	$.each(groups, (name, layers) => {
 		id++;
 		const groupId = `group${id}`;
@@ -41,12 +41,48 @@ $(function() {
 		<i class="fas pr-3 fa-layer-group"></i>${name}</a>
 		<div class="collapse show" id="${groupId}"></div>`;
 		list.append(item);
+		$(`#${groupId}`).sortable({
+			update: function(event,ui) {
+				// select divs with a data-toggle attribute (layers)
+				const data = $(this).find('div[data-toggle]').toArray().map(e => e.innerText);
+				console.debug(data);
+				$.post('reorder/',JSON.stringify(data));
+			}
+		});
 		addOverlays(map, $(`#${groupId}`), layers)
-			.then(overlays => {
-				// do something usefulin
+			.then(p => {
+				promises.push(p);
 			});
 	});
- 	$("#list").height($("#map").height());
+	return promises;
+}
+
+$(function() {
+	// setup ajax to use csrf token in posts
+	$.ajaxSetup({
+		beforeSend: function(xhr) {
+            xhr.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
+		}
+	});
+
+	// initialize the map
+	const options = {{options|safe}};
+	const map = initMap('map',options,{{map.id}});
+	
+	// set the extent of the map
+	const extent = {{extent}};
+	if (extent.length === 4) {
+		const bounds = L.latLngBounds([extent[1],extent[0]],[extent[3],extent[2]]);
+		map.fitBounds(bounds);
+	}
+
+	// load overlays
+	const groups = {{map.groups|safe}};
+	const list = $("#list");
+	overlayLayers = [];
+	addAllOverlays(groups, map, list).then(() => {
+// 	 	$("#listwrapper").height($("#map").height());
+	});
 
 {% if series %}
  	const series = {{series|safe}};
@@ -55,7 +91,6 @@ $(function() {
 			$("#itemcount").html(`${items.length}`);
 		});
 {% endif %}
-
 });
 
 </script>
@@ -71,15 +106,23 @@ $(function() {
 	<div class="full row row-fluid">
 		<div id="map" class="full col-sm-10"></div>
 		{% block list %}
-		<ul id="list" class="list-group scroll col-sm-2 pr-0">
-			{% if series %}
-			<a class="list-group-item active" data-toggle="collapse" href="#series" aria-expanded="true" aria-controls="series">
-				<i class="fas pr-3 fa-chart-line"></i>{%trans "Timeseries"%}<span id="itemcount" class="float-right badge badge-light">...</span>
-			</a>
-			<div class="collapse hide" id="series">
-			</div>
-			{% endif %}
-		</ul>
+<!-- 		<ul id="list1" class="list-group scroll col-sm-2 pr-0"> -->
+<!-- 		<li class="list-group-item">one</li> -->
+<!-- 		<li class="list-group-item">two</li> -->
+<!-- 		<li class="list-group-item">three</li> -->
+<!-- 		</ul> -->
+		<div id="listwrapper" class="col-sm-2 pr-0">
+			<ul id="list" class="list-group scroll pr-0">
+				{% if series %}
+				<a class="list-group-item active" data-toggle="collapse" href="#series" aria-expanded="true" aria-controls="series">
+					<i class="fas pr-3 fa-chart-line"></i>{%trans "Timeseries"%}<span id="itemcount" class="float-right badge badge-light">...</span>
+				</a>
+				<div class="collapse hide" id="series">
+				</div>
+				{% endif %}
+			</ul>
+			<i class="fas fa-save fa-lg pt-1" title="Save layer order"></i>
+		</div>
 		{% endblock list %}
 	</div>
 </div>

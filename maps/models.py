@@ -44,6 +44,7 @@ class Timeseries(MapsModel):
         
 class Map(MapsModel):
     
+    slug = models.SlugField(help_text=_('Short name for map'), null=True)
     name = models.CharField(_('name'),max_length=100,unique=True)
     bbox = models.CharField(_('extent'),max_length=100,null=True,blank=True)
 
@@ -56,20 +57,19 @@ class Map(MapsModel):
     def groups(self):
         groups = {}
 
-        ungrouped = self.layer_set.filter(groups__isnull=True).order_by('order').prefetch_related('groups')
+        ungrouped = self.layer_set.filter(group__isnull=True).order_by('order')
         if ungrouped:
             groups['Layers'] = collections.OrderedDict()
             for layer in ungrouped:
                 groups['Layers'][layer.layer.title]=layer.asjson()
             
-        for group in self.group_set.order_by('name').prefetch_related('layers'):
+        for group in self.group_set.order_by('name'):
             groups[group.name] = collections.OrderedDict()
-            for layer in group.layers.order_by('order'):
+            for layer in group.layer_set.order_by('order'):
                 groups[group.name][layer.layer.title]=layer.asjson()
 
         return json.dumps(groups)
                 
-            
     def get_extent(self):
         map_extent = []
         for layer in self.layer_set.exclude(use_extent=False):
@@ -102,6 +102,11 @@ class Map(MapsModel):
     def get_absolute_url(self):
         return reverse('map-detail', args=[self.pk])        
 
+@receiver(pre_save, sender=Map)
+def map_save(sender, instance, **kwargs):
+    if instance.slug is None:
+        instance.slug = slugify(instance.name)
+
 class Mirror(Map):
 
     server = models.ForeignKey(Server,on_delete=models.CASCADE)
@@ -121,13 +126,12 @@ class Mirror(Map):
 class Group(models.Model):
     name = models.CharField(_('group'), max_length=100)
     map = models.ForeignKey(Map,on_delete=models.CASCADE)
-    layers = models.ManyToManyField('maps.Layer',blank=True)
 
     def layer_count(self):
-        return self.layers.count()
+        return self.layer_set.count()
         
     def __str__(self):
-        return self.name
+        return '{}:{}'.format(self.map.name, self.name)
 
     class Meta:
         verbose_name = _('group')
@@ -137,7 +141,7 @@ class Group(models.Model):
 class Layer(MapsModel): 
     map = models.ForeignKey(Map, models.CASCADE, verbose_name=_('map'))
     layer = models.ForeignKey(WMSLayer, models.CASCADE, verbose_name=_('WMS layer'),null=True)
-    groups = models.ManyToManyField(Group, blank=True, verbose_name=_('group'), through='maps.group_layers')
+    group = models.ForeignKey(Group, models.CASCADE, blank=True, null=True, verbose_name=_('group'))
     order = models.SmallIntegerField(_('order'))
     visible = models.BooleanField(_('visible'), default=True)    
     visible.boolean = True
@@ -157,9 +161,6 @@ class Layer(MapsModel):
     allow_download.Boolean=True
     download_url = models.URLField(_('download url'),null=True,blank=True,help_text=_('url for download of entire layer'))
     stylesheet = models.URLField(_('stylesheet'),null=True, blank=True, help_text=_('url of stylesheet for GetFeatureInfo response'))
-
-    def group_names(self):
-        return ','.join(map(str,self.groups.values_list('name',flat=True)))
 
     def extent(self):
         return self.layer.extent()
