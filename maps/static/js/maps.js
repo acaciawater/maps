@@ -297,30 +297,39 @@ function toggleLabels() {
  * @returns the map
  */
 function initMap(div,options,id) {
-	var osm = L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-		maxZoom: 19,
- 		attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-	});
-	
-	var roads = L.gridLayer.googleMutant({
-	    type: 'roadmap' // valid values are 'roadmap', 'satellite', 'terrain' and 'hybrid'
-	});
 
-	var satellite = L.gridLayer.googleMutant({
-	    type: 'satellite' // valid values are 'roadmap', 'satellite', 'terrain' and 'hybrid'
-	});
-	
-	var topo = L.tileLayer('http://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}', {
-		attribution: 'Tiles &copy; Esri'
-	});
-	
-	var imagery = L.tileLayer('http://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-		attribution: 'Tiles &copy; Esri'
-	});
-	
 	var map = L.map(div,options);
 	// assign id to map
 	map.id = id;
+
+	const basePane = map.createPane('basePane');
+	basePane.style.zIndex = 100;
+	
+	var osm = L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+		maxZoom: 19,
+ 		attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+ 		pane: 'basePane'
+	});
+	
+	var roads = L.gridLayer.googleMutant({
+	    type: 'roadmap', // valid values are 'roadmap', 'satellite', 'terrain' and 'hybrid'
+	 	pane: 'basePane'	
+	 });
+
+	var satellite = L.gridLayer.googleMutant({
+	    type: 'satellite', // valid values are 'roadmap', 'satellite', 'terrain' and 'hybrid',
+ 		pane: 'basePane'
+	});
+	
+	var topo = L.tileLayer('http://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}', {
+		attribution: 'Tiles &copy; Esri',
+ 		pane: 'basePane'
+	});
+	
+	var imagery = L.tileLayer('http://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+		attribution: 'Tiles &copy; Esri',
+ 		pane: 'basePane'
+	});
 	
  	baseMaps = {'Openstreetmap': osm, 'Google maps': roads, 'Google satellite': satellite, 'ESRI topo': topo, 'ESRI satellite': imagery};
 	overlayMaps = {};
