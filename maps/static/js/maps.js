@@ -134,6 +134,24 @@ var overlayLayers = [];
 const icon_visible = 'far fa-check-square';
 const icon_invisible = 'far fa-square';
 
+function reorderOverlays(layers) {
+	// show layers in proper order on map
+	layers.forEach(layer => {
+		if (layer.options.visible) {
+			layer.bringToFront();
+		}
+	});	
+}
+
+function sortOverlays(layers, keys) {
+	// sort overlay layers by displayName using ordered array keys and display on map
+	reorderOverlays(layers.sort((a,b) => {
+		const indexA = keys.indexOf(a.options.displayName);
+		const indexB = keys.indexOf(b.options.displayName);
+		return indexA > indexB ? 1 : indexA < indexB ? -1 : 0;
+	}));
+}
+
 function toggleLayer(id) {
 	const layer = overlayLayers[id];
 	const icon_element = $(`#item_${id} .statusicon`);
@@ -147,6 +165,9 @@ function toggleLayer(id) {
 		layer.options.visible = true;
 		icon_element.removeClass(icon_invisible).addClass(icon_visible);
 	}
+	reorderOverlays(overlayLayers);
+	// inform backend about visibility change
+	$.post('toggle/',JSON.stringify([layer.options.displayName]));
 }
 
 async function addOverlay(map, layer, name) {

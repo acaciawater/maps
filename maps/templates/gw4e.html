@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+{% block title %}GW4E Dissemination Tool{% endblock %}
+{% block script %}
+{{ block.super }}
+<script src="//unpkg.com/leaflet@1.4.0/dist/leaflet.js"></script>
+{% endblock %}
+{% block style %}
+{{ block.super }}
+<link rel="stylesheet" href="//unpkg.com/leaflet@1.4.0/dist/leaflet.css"/>
+<style>
+#map {
+  height: 100%;
+}
+</style>
+{% endblock %}
+{% block content %}
+<div class="container">
+<h2 class="mt-3">Groundwater Mapping for Climate Resilient WASH</h2>	
+<p>This website presents the results of the project "Groundwater Mapping for Climate Resilient WASH in arid and semi-arid areas of Ethiopia"</p>
+<p>The project is funded by the European Union and managed by <a href="//www.unicef.org/ethiopia">Unicef Ethiopia</a>. Contracting parties are <a href="http://www.acaciawater.com">Acacia Water</a> and <a href="http://www.aquacon.info">Aquacon</a></p>
+<p>Select a document for download below or click on the map to open an interactive cluster map</p>
+<div class="row row-fluid">
+<div class="col">
+	<div id="map"></div>
+</div>
+<div class="col">
+	<div class="list-group">
+		<li class="list-group-item list-group-item-action">Final report phase 1<a href=""><i class="mt-1 fas fa-download float-right"></i></a></li>
+		<li class="list-group-item list-group-item-action">Final report phase 2<a href=""><i class="mt-1 fas fa-download float-right"></i></a></li>
+		<li class="list-group-item list-group-item-action">Geological maps 1:250000<a href=""><i class="mt-1 fas fa-download float-right"></i></a></li>
+		<li class="list-group-item list-group-item-action">Hydrogeological maps 1:250000<a href="https://cloud.acaciadata.com/index.php/apps/files?dir=/Unicef%20Ethiopia/Final%20report%20phase%201/Annex%207%20Harmonized%20geological%20maps"><i class="mt-1 fas fa-download float-right"></i></a></li>
+		<li class="list-group-item list-group-item-action">Suitability maps 1:250000<a href=""><i class="mt-1 fas fa-download float-right"></i></a></li>
+		<li class="list-group-item list-group-item-action">Woreda suitability maps<a href=""><i class="mt-1 fas fa-download float-right"></i></a></li>
+		<li class="list-group-item list-group-item-action">Socio-economic maps 1:250000<a href=""><i class="mt-1 fas fa-download float-right"></i></a></li>
+		<li class="list-group-item list-group-item-action">Inventory data<a href=""><i class="mt-1 fas fa-download float-right"></i></a></li>
+		<li class="list-group-item list-group-item-action">Geological maps 1:50000<a href=""><i class="mt-1 fas fa-download float-right"></i></a></li>
+		<li class="list-group-item list-group-item-action">Hydrogeological maps 1:50000<a href=""><i class="mt-1 fas fa-download float-right"></i></a></li>
+		<li class="list-group-item list-group-item-action">Drilling site maps 1:10000<a href=""><i class="mt-1 fas fa-download float-right"></i></a></li>
+	</div>
+</div>
+</div>
+</div>
+
+<script>
+
+$(function() {
+	// initialize the map
+	var map = L.map("map",{center:[10,40],zoom:4});
+	var osm = L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+		maxZoom: 19,
+ 		attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+	});
+	osm.addTo(map);
+	$.getJSON('/static/clusters.json').then(data => {
+		const clusters = L.geoJSON(data,{
+            onEachFeature: (feature, layer) => {
+                layer.bindTooltip(feature.properties.zonename)
+                layer.bindPopup()
+                layer.on('mouseover', () => {
+                  layer.setStyle({ color: 'red'});
+                  layer.bringToFront()
+                })
+                layer.on('mouseout', () => {
+                  layer.setStyle({color:'#3388ff'});
+                })
+                layer.on('click', () => {
+                	window.open(`/map?cluster=${feature.properties.cluster}`);
+                })
+              }
+		});
+		clusters.addTo(map);
+		map.fitBounds(clusters.getBounds());
+	});
+});
+</script>
+{% endblock content %}

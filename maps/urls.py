@@ -15,19 +15,24 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
-from .views import ProjectDetailView, MapDetailView, reorder
+from .views import ProjectDetailView, MapDetailView, HomeView, reorder
 from django.urls.conf import include
 from django.conf import settings
+from django.conf.urls.static import static
+from maps.views import map_proxy, toggle
 
 urlpatterns = [
+    path('', HomeView.as_view(),name='home'),
     path('admin/', admin.site.urls),
     path('wms/', include('wms.urls')),
     path('map/<int:pk>/reorder/', reorder,name='map-reorder'),
+    path('map/<int:pk>/toggle/', toggle,name='map-toggle'),
     path('map/<int:pk>/', MapDetailView.as_view(),name='map-detail'),
+    path('map', map_proxy, name='cluster-view'),
     path('<int:pk>/', ProjectDetailView.as_view(),name='project-detail'),
     path('<slug:slug>/', ProjectDetailView.as_view(),name='project-detail'),
-]
-
+] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+ 
 if settings.DEBUG:
     import debug_toolbar
     urlpatterns = [

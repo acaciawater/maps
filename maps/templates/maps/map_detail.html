@@ -37,16 +37,19 @@ async function addAllOverlays(groups, map, list) {
 	$.each(groups, (name, layers) => {
 		id++;
 		const groupId = `group${id}`;
-		let item = `<a class="list-group-item active" data-toggle="collapse" href="#${groupId}" aria-expanded="true" aria-controls="${groupId}">
-		<i class="fas pr-3 fa-layer-group"></i>${name}</a>
+		let item = `<a class="list-group-item list-group-item-secondary" data-toggle="collapse" href="#${groupId}" aria-expanded="true" aria-controls="${groupId}">
+		<i class="fas pr-3 fa-layer-group"></i><strong>${name}</strong></a>
 		<div class="collapse show" id="${groupId}"></div>`;
 		list.append(item);
+		// Allow user to sort layers in group list
 		$(`#${groupId}`).sortable({
 			update: function(event,ui) {
-				// select divs with a data-toggle attribute (layers)
-				const data = $(this).find('div[data-toggle]').toArray().map(e => e.innerText);
-				console.debug(data);
-				$.post('reorder/',JSON.stringify(data));
+				// copy text of divs with a data-toggle attribute (displayName of layers) to array
+				const keys = $(this).find('div[data-toggle]').toArray().map(e => e.innerText);
+				console.debug(keys);
+				$.post('reorder/',JSON.stringify(keys)).then(()=> {
+					sortOverlays(overlayLayers,keys);
+				});
 			}
 		});
 		addOverlays(map, $(`#${groupId}`), layers)
@@ -95,12 +98,6 @@ $(function() {
 
 </script>
 {% endblock %}
-    {% block header %}
-    <nav class="navbar navbar-dark bg-dark">
-    <span class=""><img class="logo" src="/static/default-logo.png"></img></span>
-	<a class="cog fas fa-cog fa-2x float-right" href="{% url object|admin_urlname:'change' object.id %}" title="Admin page"></a>
-    </nav>
-    {% endblock header %}
 {% block content %}
 <div class="full container-fluid">
 	<div class="full row row-fluid">
@@ -121,7 +118,6 @@ $(function() {
 				</div>
 				{% endif %}
 			</ul>
-			<i class="fas fa-save fa-lg pt-1" title="Save layer order"></i>
 		</div>
 		{% endblock list %}
 	</div>

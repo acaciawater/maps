@@ -14,7 +14,6 @@
 			  src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"
 			  integrity="sha256-T0Vest3yCU7pafRw9r+settMBX6JkKN06dqBnpQ8d30="
 			  crossorigin="anonymous"></script>	
-<!-- 	<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-sortable/0.9.13/jquery-sortable-min.js"></script> -->
 	<script src="//cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
 	<script src="//stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
 	{% endblock %}
@@ -26,14 +25,17 @@
     html, body {
     	height: 100%;
     }
-    .logo {
-      height: 72px;
-    }
+	.unibar {
+		background-color: #1CABE3;
+	    border-color: #E7E7E7;
+	}
+	.logo {
+	  height: 48px;
+	}
     a.cog {
       color: white;
       text-decoration: none;
     }
-    
     </style>
 
 	{% endblock %}
@@ -41,9 +43,9 @@
 {% csrf_token %}
 <body>
     {% block header %}
-    <nav class="navbar navbar-dark bg-dark">
-    <span class=""><img class="logo" src="/static/default-logo.png"></img></span>
-	<a class="cog fas fa-cog fa-2x float-right" href="/admin" title="Admin page"></a>
+    <nav class="navbar navbar-dark unibar">
+    <li class="nav"><img class="logo" src="/static/eulogo.jpg"></img><img class="logo" src="/static/unicef.png"></img></li>
+    <li class="nav justify-content-end"><img class="logo" src="/static/default-logo.png"></img></li>
     </nav>
     {% endblock header %}
     {% block content %}
