@@ -73,7 +73,7 @@ class Layer(models.Model):
     tiled = models.BooleanField(_('tiled'), default=True)
     tiled.Boolean=True
     attribution = models.CharField(_('attribution'),max_length=200,blank=True,null=True,default='')
-    bbox = models.CharField(_('extent'),max_length=100,null=True)
+    bbox = models.CharField(_('extent'),max_length=100,null=True,blank=True)
 
     def __str__(self):
         return '{}:{}'.format(self.server, self.title or self.layername)

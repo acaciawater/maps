@@ -24,10 +24,12 @@
     <style>
     html, body {
     	height: 100%;
+		background-color: #f5f9fa;
     }
 	.unibar {
 		background-color: #1CABE3;
 	    border-color: #E7E7E7;
+	    color: white;
 	}
 	.logo {
 	  height: 48px;
@@ -44,8 +46,22 @@
 <body>
     {% block header %}
     <nav class="navbar navbar-dark unibar">
-    <li class="nav"><img class="logo" src="/static/eulogo.jpg"></img><img class="logo" src="/static/unicef.png"></img></li>
-    <li class="nav justify-content-end"><img class="logo" src="/static/default-logo.png"></img></li>
+    {% if object.name %}
+    <li class="navbar-brand">{{object.name}}</li>
+    <li class="nav justify-content-end">
+    	<a href="//www.unicef.org/ethiopia"><img class="logo" src="/static/unicef.png"></img></a>
+    	<a href="https://eeas.europa.eu/delegations/ethiopia_en"><img class="logo" src="/static/eulogo.jpg"></img></a>
+    	<a href="http://www.acaciawater.com"><img class="logo ml-3" src="/static/default-logo.png"></img></a>
+    </li>
+    {% else %}
+    <li class="nav">
+		<a href="https://eeas.europa.eu/delegations/ethiopia_en"><img class="logo" src="/static/eulogo.jpg"></img></a>
+    	<a href="//www.unicef.org/ethiopia"><img class="logo" src="/static/unicef.png"></img></a>
+    </li>
+    <li class="nav justify-content-end">
+    	<a href="http://www.acaciawater.com"><img class="logo" src="/static/default-logo.png"></img></a>
+    </li>
+    {% endif %}
     </nav>
     {% endblock header %}
     {% block content %}
