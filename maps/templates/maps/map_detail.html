@@ -87,13 +87,6 @@ $(function() {
 // 	 	$("#listwrapper").height($("#map").height());
 	});
 
-{% if series %}
- 	const series = {{series|safe}};
-	addItems(map, $("#series"), series)
-		.then(items => {
-			$("#itemcount").html(`${items.length}`);
-		});
-{% endif %}
 });
 
 </script>
