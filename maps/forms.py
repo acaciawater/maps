@@ -14,7 +14,7 @@ class LayerPropertiesForm(forms.Form):
     transparent = forms.NullBooleanField(required=False)
     opacity = forms.DecimalField(max_digits=4, decimal_places=1,required=False)
     allow_download = forms.NullBooleanField(required=False)
-    
+    order = forms.IntegerField(required=False)
 
 class SelectMapForm(forms.Form):
     map = forms.ModelChoiceField(queryset=Map.objects.all(),required=False)
