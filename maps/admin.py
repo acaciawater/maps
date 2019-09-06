@@ -95,7 +95,7 @@ class LayerAdmin(admin.ModelAdmin):
         
 class LayerInline(admin.TabularInline):
     model = Layer
-    fields = ('layer', 'order', 'visible', 'clickable', 'allow_download', 'opacity')
+    fields = ('layer', 'order', 'group', 'visible', 'clickable', 'allow_download', 'opacity')
     extra = 0
     
     def get_queryset(self, request):
