@@ -62,7 +62,7 @@ def reorder(request, pk):
         is something like ["suitability","ndvi",,...]
     '''
     mapObject = get_object_or_404(Map,pk=pk)
-    items = json.loads(request.body)
+    items = json.loads(request.body.decode('utf-8'))
     for index, item in enumerate(items):
         layer = mapObject.layer_set.get(layer__title=item)
         if layer.order != index:
@@ -76,7 +76,7 @@ def toggle(request, pk):
         is something like ["suitability","ndvi",,...]
     '''
     mapObject = get_object_or_404(Map,pk=pk)
-    items = json.loads(request.body)
+    items = json.loads(request.body.decode('utf-8'))
     for item in items:
         layer = mapObject.layer_set.get(layer__title=item)
         layer.visible = not layer.visible
