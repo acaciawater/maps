@@ -10,6 +10,7 @@ from django.views.generic.detail import DetailView
 import json
 from django.shortcuts import get_object_or_404, redirect
 from django.http.response import HttpResponse, HttpResponseNotFound
+from django.views.decorators.csrf import csrf_exempt
 
 class MapDetailView(DetailView):
     model = Map
@@ -56,6 +57,7 @@ def reorder1(request, pk):
             layer.save(update_fields=('order',))
     return HttpResponse(status=200)
 
+@csrf_exempt
 def reorder(request, pk):
     ''' reorder layers in map
         request.body contains names of layers as json array in proper order 
@@ -70,6 +72,7 @@ def reorder(request, pk):
             layer.save(update_fields=('order',))
     return HttpResponse(status=200)
 
+@csrf_exempt
 def toggle(request, pk):
     ''' toggle visibility of layers in map
         request.body contains names of layers as json array in proper order 

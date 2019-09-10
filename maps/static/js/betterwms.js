@@ -51,7 +51,7 @@ L.TileLayer.BetterWMS = L.TileLayer.WMS.extend({
     // use displayname instead of layer name
     let displayName = this.wmsParams.displayName;
     const resp= xml2json.docToJSON(response);
-    let html = '<html><body><table>';
+    let html = '';
     let itemCount = 0;
     if (resp.tagName === 'GetFeatureInfoResponse') {
     	if (resp.children) {
@@ -60,7 +60,6 @@ L.TileLayer.BetterWMS = L.TileLayer.WMS.extend({
 	    		if (layerName === this.wmsParams.layers)
 	    			// use provided display name (wmslayer's title)
 	    			layerName = displayName;
-				html += `<tr><th colspan="3">${layerName}</th></tr>`;
 	    		if (layer.children) {
 		    		layer.children.forEach(item => {
 		    			if (item.tagName === 'Attribute') {
@@ -68,8 +67,7 @@ L.TileLayer.BetterWMS = L.TileLayer.WMS.extend({
 	    					const value = item.attr.value;
 	    					itemCount++;
 	    					html += `<tr>
-		    					<td></td>
-		    					<td>${name}</td>
+		    					<td>${layerName}</td>
 		    					<td>${value}</td>
 		    					</tr>`
 		    			}
@@ -85,7 +83,6 @@ L.TileLayer.BetterWMS = L.TileLayer.WMS.extend({
 					    					// console.info(`layer=${layerName}, feature=${id}, ${name}=${value}`);
 					    					itemCount++;
 					    					html += `<tr>
-					    					<td>${id}</td>
 					    					<td>${name}</td>
 					    					<td>${value}</td>
 					    					</tr>`
@@ -99,7 +96,6 @@ L.TileLayer.BetterWMS = L.TileLayer.WMS.extend({
 	    	})
     	}
     }
-    html += '</table></body></html>';
     return itemCount? html: null;
   },
 
@@ -110,8 +106,8 @@ L.TileLayer.BetterWMS = L.TileLayer.WMS.extend({
 	    if (html) {
 	    	L.popup({ maxWidth: 800})
 		    .setLatLng(evt.latlng)
-		    .setContent(html)
-		    .openOn(this._map);  	
+		    .setContent('<html><body><table>' + html + '</table></body></html>')
+		    .openOn(this._map)  	
 	    }
 	});
   },

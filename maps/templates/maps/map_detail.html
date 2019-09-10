@@ -22,7 +22,10 @@
 <script src="/static/js/betterwms.js"></script>
 <script src="/static/js/xml2json.js"></script>
 <script src="/static/js/maps.js"></script>
+<script src="/static/js/inventory.js"></script>
 <script>
+
+var inventory = new Inventory()
 
 function getCookie(cookie) {
 	const cookies = decodeURIComponent(document.cookie).split(';')
@@ -30,17 +33,21 @@ function getCookie(cookie) {
 		.filter(token => token.startsWith(cookie));
 	return cookies.length==1? cookies[0].substring(cookie.length+1): "";
 }
-	
+
+/***
+ * returns array of promises (one for every group) that resolve when layers in the group have been loaded
+ */
 async function addAllOverlays(groups, map, list) {
 	let id = 0;
-	let promises = [];
-	$.each(groups, (name, layers) => {
-		id++;
-		const groupId = `group${id}`;
+	return Object.keys(groups).map(name => {
+		const layers = groups[name]
+		const groupId = `group${id++}`;
 		let item = `<a class="list-group-item list-group-item-secondary" data-toggle="collapse" href="#${groupId}" aria-expanded="true" aria-controls="${groupId}">
 		<i class="fas pr-3 fa-layer-group"></i><strong>${name}</strong></a>
 		<div class="collapse show" id="${groupId}"></div>`;
 		list.append(item);
+
+		{% if request.user.is_authenticated %}
 		// Allow user to sort layers in group list
 		$(`#${groupId}`).sortable({
 			update: function(event,ui) {
@@ -52,21 +59,41 @@ async function addAllOverlays(groups, map, list) {
 				});
 			}
 		});
-		addOverlays(map, $(`#${groupId}`), layers)
-			.then(p => {
-				promises.push(p);
-			});
+		{% endif %}
+		return addOverlays(map, $(`#${groupId}`), layers)
 	});
-	return promises;
+}
+
+function getSelectedProperty() {
+	return $("#property option:selected").text()
+}
+
+function propertyChanged() {
+	const prop = getSelectedProperty()
+	if (prop.startsWith('Choose'))
+		prop = undefined
+	inventory.attribute = prop
+	$("#legend").html(inventory.getLegendGraphic())
+	inventory.redraw(theMap)
+}
+
+/***
+ * call getFeatureInfo on all WMS layers on the map and return contents of html table for popup
+ */
+async function getFeatureInfo(map, evt) {
+	const layers = map._layers
+	const wmsKeys = Object.keys(layers).filter(key => layers[key].getFeatureInfoParams);
+	const promises = wmsKeys.map(key => {		
+		const layer = layers[key];
+	    const params = layer.getFeatureInfoParams(evt.latlng);
+	    return $.get(layer._url,params).then(response => {
+	    	return layer.formatFeatureInfoResponse(response);
+		})
+	})
+	return await Promise.all(promises);
 }
 
 $(function() {
-	// setup ajax to use csrf token in posts
-	$.ajaxSetup({
-		beforeSend: function(xhr) {
-            xhr.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
-		}
-	});
 
 	// initialize the map
 	const options = {{options|safe}};
@@ -84,9 +111,40 @@ $(function() {
 	const list = $("#list");
 	overlayLayers = [];
 	addAllOverlays(groups, map, list).then(() => {
-// 	 	$("#listwrapper").height($("#map").height());
+		map.on('click', evt => {
+			// query all visible wms layers
+			getFeatureInfo(map, evt).then(info => {
+				if (info.length) {
+			    	L.popup({ maxWidth: 800})
+				    .setLatLng(evt.latlng)
+				    .setContent('<html><body><table class="table table-sm">' + info.join('\n') + '</table></body></html>')
+				    .openOn(map)  	
+				}
+			})
+			// don't call layer.on('click')
+			// evt.preventDefault()
+		});
 	});
+	
+	// Load the inventory data
+	inventory.loadData('/static/inventory.json').then(data => {
 
+		// add select control to ui
+		let text = '<li class="list-group-item list-group-item-secondary">Inventory Data</li><select id="property" class="custom-select" onchange="propertyChanged()"><option selected>Choose...</option>';
+		let index = 1;
+		for (const prop in data.features[0].properties) {
+			text += `<option value="${index}">${prop}</option>`;
+			index++;
+		}
+		text += '</select>';
+		$("#inventory").append(text);
+		
+		// load style for inventory data
+		inventory.loadStyles('/static/styles.json').then(styles => {
+			// create layer and add to map
+			inventory.createLayer(data).addTo(map)
+		})
+	})
 });
 
 </script>
@@ -96,21 +154,11 @@ $(function() {
 	<div class="full row row-fluid">
 		<div id="map" class="full col-sm-10"></div>
 		{% block list %}
-<!-- 		<ul id="list1" class="list-group scroll col-sm-2 pr-0"> -->
-<!-- 		<li class="list-group-item">one</li> -->
-<!-- 		<li class="list-group-item">two</li> -->
-<!-- 		<li class="list-group-item">three</li> -->
-<!-- 		</ul> -->
 		<div id="listwrapper" class="col-sm-2 pr-0">
-			<ul id="list" class="list-group scroll pr-0">
-				{% if series %}
-				<a class="list-group-item active" data-toggle="collapse" href="#series" aria-expanded="true" aria-controls="series">
-					<i class="fas pr-3 fa-chart-line"></i>{%trans "Timeseries"%}<span id="itemcount" class="float-right badge badge-light">...</span>
-				</a>
-				<div class="collapse hide" id="series">
-				</div>
-				{% endif %}
-			</ul>
+			<div id="list" class="list-group scroll pr-0"></div>
+			<div id="inventory" class="list-group scroll mt-3 pr-0"></div>
+			<br>
+			<div id="legend" class="pl-3 ml-3"></div>
 		</div>
 		{% endblock list %}
 	</div>

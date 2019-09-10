@@ -173,7 +173,6 @@ function toggleLayer(id) {
 async function addOverlay(map, layer, name) {
 	if (layer) {
 		const overlay = L.tileLayer.betterWms(layer.url, layer);
-//		map.layerControl.addOverlay(overlay,name);
 		if (layer.visible) {
 			overlay.addTo(map);
 		}
@@ -182,9 +181,9 @@ async function addOverlay(map, layer, name) {
 }
 
 async function addOverlays(map, list, layers) {
-	let promises = [];
-	$.each(layers, (name, layer) => {
-		const p = addOverlay(map, layer, name).then(overlay => {
+	return Object.keys(layers).map(name => {
+		const layer = layers[name];
+		return addOverlay(map, layer, name).then(overlay => {
 			const id = overlayLayers.push(overlay)-1;
 			const icon = layer.visible? icon_visible: icon_invisible;
 			let item = `<li id=item_${id} class="list-group-item">
@@ -196,9 +195,7 @@ async function addOverlays(map, list, layers) {
 			item += `<div class="collapse hide" id="legend_${id}"><img src="${layer.legend}"></img></div></li>`;
 			list.append(item);
 		});
-		promises.push(p);
 	});
-	return promises;
 }
 
 var hilite = null;
