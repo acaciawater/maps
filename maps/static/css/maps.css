@@ -1,6 +1,6 @@
 @CHARSET "UTF-8";
 
-html, body, .wrapper, .full {
+html, body {
 	height: 100%;
 	margin: 0px;
 	padding: 0px;
@@ -12,9 +12,6 @@ html, body {
 
 #list {
 	overflow-y: auto;
-}
-
-#map {
 }
 
 .legend {
@@ -52,6 +49,8 @@ html, body {
 	background-color: #1CABE3;
     border-color: #E7E7E7;
     color: white;
+    font-size: large;
+    /*font-weight: bold;*/
 }
 
 .logo {
