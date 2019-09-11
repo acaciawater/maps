@@ -59,17 +59,28 @@ class Inventory {
 		}
 	}
 
-	getLegendGraphic() {
+	getLegendContent() {
 		const attr = this.getAttribute()
 		if (attr == undefined)
 			return ''
+		if (this.styles == undefined)
+			return ''
 		const colors = this.styles.colors[attr]
 		const classes = this.styles.classes[attr]
-		let html = ''
+		if (classes == undefined || colors == undefined)
+			return ''
+		let html = `<strong>${attr}</strong>`
 		for(let i=0;i<classes.length;i++) {
-			const clr = colors[i]
-			let txt = i==0? '< ': `${classes[i-1]} - `
-			txt += classes[i] 
+			let txt = ''
+			if (i==0) {
+				txt =  `<  ${classes[i]}`
+			}
+			else if (i < classes.length-1) {
+				txt = `${classes[i-1]} - ${classes[i]}`
+			}
+			else  {
+				txt = `> ${classes[i-1]}` 
+			}
 			html += `<div><i class="fas fa-circle fa-xs pr-2" style="color:${colors[i]}"></i>${txt}</div>`
 		}
 		return html
@@ -82,7 +93,7 @@ class Inventory {
 	createLayer(data) {
 		this.data = data
 		const attr = this.getAttribute()
-		return self.layer = L.geoJSON(data, {
+		return this.layer = L.geoJSON(data, {
 			onEachFeature: (feature, layer) => {
 				layer.bindTooltip(`${attr}: ${feature.properties[attr]}`);
 			},
