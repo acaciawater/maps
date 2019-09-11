@@ -26,6 +26,7 @@
 <script>
 
 var inventory = new Inventory()
+var legend;
 
 function getCookie(cookie) {
 	const cookies = decodeURIComponent(document.cookie).split(';')
@@ -65,15 +66,13 @@ async function addAllOverlays(groups, map, list) {
 }
 
 function getSelectedProperty() {
-	return $("#property option:selected").text()
+	const prop = $("#property option:selected").text()
+	return prop.startsWith('Choose') ? undefined : prop 
 }
 
 function propertyChanged() {
-	const prop = getSelectedProperty()
-	if (prop.startsWith('Choose'))
-		prop = undefined
-	inventory.attribute = prop
-	$("#legend").html(inventory.getLegendGraphic())
+	inventory.attribute = getSelectedProperty()
+	showLegend(theMap)
 	inventory.redraw(theMap)
 }
 
@@ -90,7 +89,20 @@ async function getFeatureInfo(map, evt) {
 	    	return layer.formatFeatureInfoResponse(response);
 		})
 	})
-	return await Promise.all(promises);
+	const featureInfo = await Promise.all(promises)
+	return featureInfo.filter(a => a.length > 0)
+}
+
+function showLegend(map) {
+	if (legend)
+		legend.remove()
+	legend = L.control({position: "bottomright"})
+	legend.onAdd = function(map) {
+		const div = L.DomUtil.create("div", "legend");
+		div.innerHTML = inventory.getLegendContent()
+		return div;
+	}
+	legend.addTo(map)
 }
 
 $(function() {
@@ -114,36 +126,35 @@ $(function() {
 		map.on('click', evt => {
 			// query all visible wms layers
 			getFeatureInfo(map, evt).then(info => {
-				if (info.length) {
+				if (info.length > 0) {
 			    	L.popup({ maxWidth: 800})
 				    .setLatLng(evt.latlng)
-				    .setContent('<html><body><table class="table table-sm">' + info.join('\n') + '</table></body></html>')
+				    .setContent('<table class="table table-sm">' + info.join('\n') + '</table>')
 				    .openOn(map)  	
 				}
 			})
-			// don't call layer.on('click')
-			// evt.preventDefault()
 		});
 	});
 	
 	// Load the inventory data
 	inventory.loadData('/static/inventory.json').then(data => {
 
-		// add select control to ui
-		let text = '<li class="list-group-item list-group-item-secondary">Inventory Data</li><select id="property" class="custom-select" onchange="propertyChanged()"><option selected>Choose...</option>';
-		let index = 1;
-		for (const prop in data.features[0].properties) {
-			text += `<option value="${index}">${prop}</option>`;
-			index++;
-		}
-		text += '</select>';
-		$("#inventory").append(text);
-		
 		// load style for inventory data
 		inventory.loadStyles('/static/styles.json').then(styles => {
+			// add select control to ui
+			let text = '<li class="list-group-item list-group-item-secondary">Inventory Data</li><select id="property" class="custom-select" onchange="propertyChanged()"><option selected>Choose...</option>';
+			let index = 1;
+			for (const cls in styles.classes) {
+				text += `<option value="${index}">${cls}</option>`;
+				index++;
+			}
+			text += '</select>';
+			$("#inventory").html(text);
+
 			// create layer and add to map
 			inventory.createLayer(data).addTo(map)
 		})
+		
 	})
 });
 
@@ -158,7 +169,7 @@ $(function() {
 			<div id="list" class="list-group scroll pr-0"></div>
 			<div id="inventory" class="list-group scroll mt-3 pr-0"></div>
 			<br>
-			<div id="legend" class="pl-3 ml-3"></div>
+			<div id="legend1" class="pl-3 ml-3"></div>
 		</div>
 		{% endblock list %}
 	</div>
