@@ -12,8 +12,9 @@ from django.shortcuts import get_object_or_404, redirect
 from django.http.response import HttpResponse, HttpResponseNotFound
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.mixins import LoginRequiredMixin
 
-class MapDetailView(DetailView):
+class MapDetailView(LoginRequiredMixin, DetailView):
     model = Map
     
     def getMap(self):
@@ -43,6 +44,7 @@ class ProjectDetailView(MapDetailView):
         return context
 
 @csrf_exempt
+@login_required
 def reorder(request, pk):
     ''' reorder layers in map
         request.body contains names of layers as json array in proper order 
@@ -61,6 +63,7 @@ def reorder(request, pk):
     return HttpResponse(status=200)
 
 @csrf_exempt
+@login_required
 def toggle(request, pk):
     ''' toggle visibility of layers in map
         request.body contains names of layers as json array in proper order 
