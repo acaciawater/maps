@@ -59,6 +59,14 @@ class Inventory {
 		}
 	}
 
+	getFeatureInfo(feature) {
+		let html = '<h5 class="text-center unibar">Inventory Data</h5><table class="table table-hover table-sm"><thead><tr><th>Attribute</th><th>Value</th></tr></thead><tbody>'
+		for (let [prop,value] of Object.entries(feature.properties)) {
+			html += `<tr><td>${prop}</td><td>${value}</td></tr>`
+		}
+		return html + '</tbody></table>'
+	}
+	
 	getLegendContent() {
 		const attr = this.getAttribute()
 		if (attr == undefined)
@@ -96,6 +104,7 @@ class Inventory {
 		return this.layer = L.geoJSON(data, {
 			onEachFeature: (feature, layer) => {
 				layer.bindTooltip(`${attr}: ${feature.properties[attr]}`);
+				layer.bindPopup(this.getFeatureInfo(feature),{maxWidth: 800});
 			},
 	        pointToLayer: (feature, latlng) => {
 	            return L.circleMarker(latlng, this.getStyle(feature))
