@@ -81,7 +81,10 @@ function propertyChanged() {
  */
 async function getFeatureInfo(map, evt) {
 	const layers = map._layers
-	const wmsKeys = Object.keys(layers).filter(key => layers[key].getFeatureInfoParams);
+	const wmsKeys = Object.keys(layers).filter(key => {
+		const layer = layers[key]
+		return layer.wmsParams && layer.wmsParams.clickable
+	})
 	const promises = wmsKeys.map(key => {		
 		const layer = layers[key];
 	    const params = layer.getFeatureInfoParams(evt.latlng);
