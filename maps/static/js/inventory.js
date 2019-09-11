@@ -103,7 +103,9 @@ class Inventory {
 		const attr = this.getAttribute()
 		return this.layer = L.geoJSON(data, {
 			onEachFeature: (feature, layer) => {
-				layer.bindTooltip(`${attr}: ${feature.properties[attr]}`);
+				if (attr) {
+					layer.bindTooltip(`${attr}: ${feature.properties[attr]}`);
+				}
 				layer.bindPopup(this.getFeatureInfo(feature),{maxWidth: 800});
 			},
 	        pointToLayer: (feature, latlng) => {
