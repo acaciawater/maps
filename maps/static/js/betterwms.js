@@ -20,17 +20,17 @@ L.TileLayer.BetterWMS = L.TileLayer.WMS.extend({
   onAdd: function (map) {
     // Triggered when the layer is added to a map.
     L.TileLayer.WMS.prototype.onAdd.call(this, map);
-    if (this.wmsParams.clickable) {
-    	map.on('click', this.getFeatureInfo, this);
-    }
+//    if (this.wmsParams.clickable) {
+//    	map.on('click', this.getFeatureInfo, this);
+//    }
   },
   
   onRemove: function (map) {
     // Triggered when the layer is removed from a map.
     L.TileLayer.WMS.prototype.onRemove.call(this, map);
-    if (this.wmsParams.clickable) {
-    	map.off('click', this.getFeatureInfo, this);
-    }
+//    if (this.wmsParams.clickable) {
+//    	map.off('click', this.getFeatureInfo, this);
+//    }
   },
   
   formatFeatureInfoResponseXSLT: function(response) {
@@ -96,7 +96,7 @@ L.TileLayer.BetterWMS = L.TileLayer.WMS.extend({
 	    	})
     	}
     }
-    return itemCount? html: null;
+    return html
   },
 
   getFeatureInfo: function(evt) {
