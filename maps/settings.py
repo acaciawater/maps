@@ -21,7 +21,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-SITE_ID = 2
+SITE_ID = 1
 
 # Application definition
 
@@ -108,6 +108,7 @@ USE_L10N = True
 
 USE_TZ = True
 
+LOGIN_URL = '/admin/login/'
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/2.2/howto/static-files/
