@@ -152,22 +152,23 @@ function sortOverlays(layers, keys) {
 	}));
 }
 
-function toggleLayer(id) {
-	const layer = overlayLayers[id];
-	const icon_element = $(`#item_${id} .statusicon`);
+function toggleLayer(event) {
+	const icon = event.target;
+	const name = icon.nextElementSibling.innerText
+	const layer = overlayLayers.find(o => o.options.displayName == name)
 	if (layer.options.visible) {
 		theMap.removeLayer(layer);
 		layer.options.visible = false;
-		icon_element.removeClass(icon_visible).addClass(icon_invisible);
+		icon.className = icon.className.replace(icon_visible,icon_invisible);
 	}
 	else {
 		theMap.addLayer(layer);
 		layer.options.visible = true;
-		icon_element.removeClass(icon_invisible).addClass(icon_visible);
+		icon.className = icon.className.replace(icon_invisible,icon_visible);
 	}
 	reorderOverlays(overlayLayers);
 	// inform backend about visibility change
-	$.post('toggle/',JSON.stringify([layer.options.displayName]));
+	$.post('toggle/',JSON.stringify([name]));
 }
 
 async function addOverlay(map, layer, name) {
@@ -180,6 +181,10 @@ async function addOverlay(map, layer, name) {
 	}
 }
 
+function inspect(e) {
+	console.debug(e)
+}
+
 async function addOverlays(map, list, layers) {
 	return Object.keys(layers).map(name => {
 		const layer = layers[name];
@@ -187,7 +192,7 @@ async function addOverlays(map, list, layers) {
 			const id = overlayLayers.push(overlay)-1;
 			const icon = layer.visible? icon_visible: icon_invisible;
 			let item = `<li id=item_${id} class="list-group-item">
-				<i class="statusicon pr-2 pl-0 pt-1 ${icon} float-left" onclick="toggleLayer(${id})"></i>
+				<i class="statusicon pr-2 pl-0 pt-1 ${icon} float-left" onclick="toggleLayer(event)"></i>
 				<div data-toggle="collapse" href="#legend_${id}">${name}</div>`;
 			if (layer.downloadUrl) {
 				item += `<a href="${layer.downloadUrl}"><i class="fas fa-file-download float-right" title="download"></i></a>`
