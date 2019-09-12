@@ -76,7 +76,7 @@ class Layer(models.Model):
     bbox = models.CharField(_('extent'),max_length=100,null=True,blank=True)
 
     def __str__(self):
-        return '{}:{}'.format(self.server, self.title or self.layername)
+        return '{}:{}'.format(self.server, self.layername)
 
     def details(self):
         try:
