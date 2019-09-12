@@ -119,4 +119,7 @@ def map_proxy(request):
 @login_required
 def get_map_config(request, pk):
     ''' return user's layer configuration for all groups in the map '''
-    return HttpResponse(UserConfig.groups(request.user, get_object_or_404(Map, pk=pk)), content_type='application/json')
+    map = get_object_or_404(Map,pk=pk)
+    user = request.user
+    UserConfig.sync(user, map)
+    return HttpResponse(UserConfig.groups(user, map), content_type='application/json')
