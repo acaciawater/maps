@@ -122,23 +122,24 @@ $(function() {
 	}
 
 	// load overlays
-	const groups = {{map.groups|safe}};
+	// const groups = {{map.groups|safe}};
 	const list = $("#list");
 	overlayLayers = [];
-	addAllOverlays(groups, map, list).then(() => {
-		map.on('click', evt => {
-			// query all visible wms layers
-			getFeatureInfo(map, evt).then(info => {
-				if (info.length > 0) {
-			    	L.popup({ maxWidth: 800})
-				    .setLatLng(evt.latlng)
-				    .setContent('<table class="table table-sm">' + info.join('\n') + '</table>')
-				    .openOn(map)  	
-				}
+	$.getJSON('/map/{{map.pk}}/config/').then(groups => {
+		addAllOverlays(groups, map, list).then(() => {
+			map.on('click', evt => {
+				// query all visible wms layers
+				getFeatureInfo(map, evt).then(info => {
+					if (info.length > 0) {
+				    	L.popup({ maxWidth: 800})
+					    .setLatLng(evt.latlng)
+					    .setContent('<table class="table table-sm">' + info.join('\n') + '</table>')
+					    .openOn(map)  	
+					}
+				})
 			})
-		});
-	});
-	
+		})
+	})	
 	// Load the inventory data
 	inventory.loadData('/static/inventory.json').then(data => {
 

@@ -13,6 +13,7 @@ from django.http.response import HttpResponse, HttpResponseNotFound
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
+from maps.models import UserConfig
 
 class MapDetailView(LoginRequiredMixin, DetailView):
     model = Map
@@ -53,13 +54,16 @@ def reorder(request, pk):
     if not request.user.is_authenticated:
         return HttpResponse('Authentication required to reorder layers.', status=401)
     
-    mapObject = get_object_or_404(Map,pk=pk)
+    user = request.user
+    target = get_object_or_404(Map,pk=pk)
     items = json.loads(request.body.decode('utf-8'))
+    # make sure user config is in sync with map
+    UserConfig.sync(user, target)
     for index, item in enumerate(items):
-        layer = mapObject.layer_set.get(layer__title=item)
-        if layer.order != index:
-            layer.order = index
-            layer.save(update_fields=('order',))
+        config = user.userconfig_set.get(layer__map=target, layer__layer__title=item)
+        if config.order != index:
+            config.order = index
+            config.save(update_fields=('order',))
     return HttpResponse(status=200)
 
 @csrf_exempt
@@ -72,13 +76,17 @@ def toggle(request, pk):
     if not request.user.is_authenticated:
         return HttpResponse('Authentication required to toggle visibility of layers.', status=401)
 
-    mapObject = get_object_or_404(Map,pk=pk)
+    user = request.user
+    target = get_object_or_404(Map,pk=pk)
     items = json.loads(request.body.decode('utf-8'))
+    # make sure user config is in sync with map
+    UserConfig.sync(user, target)
     for item in items:
-        layer = mapObject.layer_set.get(layer__title=item)
-        layer.visible = not layer.visible
-        layer.save(update_fields=('visible',))
+        config = user.userconfig_set.get(layer__map=target, layer__layer__title=item)
+        config.visible = not config.visible
+        config.save(update_fields=('visible',))
     return HttpResponse(status=200)
+
 
 class HomeView(TemplateView):
     template_name = 'gw4e.html'
@@ -107,3 +115,8 @@ def map_proxy(request):
         return redirect('map-detail',pk=mapObject.pk)
     else:
         return HttpResponseNotFound('Cluster name or number is missing.')
+
+@login_required
+def get_map_config(request, pk):
+    ''' return user's layer configuration for all groups in the map '''
+    return HttpResponse(UserConfig.groups(request.user, get_object_or_404(Map, pk=pk)), content_type='application/json')

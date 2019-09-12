@@ -15,11 +15,11 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
-from .views import ProjectDetailView, MapDetailView, HomeView, reorder
+from .views import ProjectDetailView, MapDetailView, HomeView
 from django.urls.conf import include
 from django.conf import settings
 from django.conf.urls.static import static
-from maps.views import map_proxy, toggle
+from maps.views import map_proxy, toggle, reorder, get_map_config
 
 urlpatterns = [
     path('', HomeView.as_view(),name='home'),
@@ -27,6 +27,7 @@ urlpatterns = [
     path('wms/', include('wms.urls')),
     path('map/<int:pk>/reorder/', reorder,name='map-reorder'),
     path('map/<int:pk>/toggle/', toggle,name='map-toggle'),
+    path('map/<int:pk>/config/', get_map_config, name='map-config'),
     path('map/<int:pk>/', MapDetailView.as_view(),name='map-detail'),
     path('map', map_proxy, name='cluster-view'),
     path('<int:pk>/', ProjectDetailView.as_view(),name='project-detail'),

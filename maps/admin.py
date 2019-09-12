@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.contrib.admin.decorators import register
 from .models import Map, Layer
 from django.contrib import messages
-from maps.models import Project, Timeseries, Group, Mirror
+from maps.models import Project, Timeseries, Group, Mirror, UserConfig
 from maps.actions import update_mirror
 from maps.forms import LayerPropertiesForm, SelectMapForm
 from django.shortcuts import render
@@ -11,7 +11,6 @@ from django.db.models import Max
 
 @register(Group)
 class GroupAdmin(admin.ModelAdmin):
-    model = Group
     fields = ('name','map')
     list_display = ('name', 'map', 'layer_count')
     list_filter = ('map',)
@@ -19,7 +18,6 @@ class GroupAdmin(admin.ModelAdmin):
 
 @register(Layer)
 class LayerAdmin(admin.ModelAdmin):
-    model = Layer
     fields = (('layer','map','group'),
               ('order','visible','use_extent'),
               ('opacity','transparent'),
@@ -103,10 +101,9 @@ class LayerInline(admin.TabularInline):
     
 @register(Map)
 class MapAdmin(admin.ModelAdmin):
-    model = Map
     inlines = [LayerInline]
     exclude = ['slug']
-    actions = ['update_extent']
+    actions = ['update_extent','create_user_config']
     
     def update_extent(self, request, queryset):
         count = 0
@@ -115,15 +112,30 @@ class MapAdmin(admin.ModelAdmin):
             count+=1
         messages.success(request, _('{} extents were updated sucessfully.').format(count))
         
+    def create_user_config(self, request, queryset):
+        mapcount = 0
+        layercount = 0
+        for m in queryset:
+            layercount += UserConfig.update(request.user, m)
+            mapcount+=1
+        if layercount == 0:
+            messages.warning(request, _('No layers were created from {} maps.').format(mapcount))
+        else:
+            messages.success(request, _('{} layers were created successfully from {} maps.').format(layercount, mapcount))
+
+@register(UserConfig)
+class UserConfigAdmin(admin.ModelAdmin):
+    list_filter = ('user','layer__map')
+    list_display = ('layer','user','order','visible') 
+
 @register(Mirror)
 class MirrorAdmin(MapAdmin):
-    model = Mirror
     actions = [update_mirror]
     
 @register(Timeseries)
 class TimeseriesAdmin(admin.ModelAdmin):
-    model = Timeseries
+    pass
     
 @register(Project)
 class ProjectAdmin(admin.ModelAdmin):
-    model = Project
+    pass

@@ -12,6 +12,7 @@ from django.dispatch import receiver
 from django.db.models.signals import pre_save
 import collections
 from django.urls.base import reverse
+from django.contrib.auth.models import User
 
 class MapsModel(models.Model):
     '''
@@ -70,6 +71,9 @@ class Map(MapsModel):
 
         return json.dumps(groups)
                 
+    def user_groups(self, user):
+        return UserConfig.groups(user, self)
+    
     def get_extent(self):
         map_extent = []
         for layer in self.layer_set.exclude(use_extent=False):
@@ -106,9 +110,9 @@ class Map(MapsModel):
 def map_save(sender, instance, **kwargs):
     if instance.slug is None:
         instance.slug = slugify(instance.name)
-
+  
 class Mirror(Map):
-
+    ''' A map that mirrors all layers on a WMS server '''
     server = models.ForeignKey(Server,on_delete=models.CASCADE)
     
     def update_layers(self):
@@ -198,6 +202,64 @@ class Layer(MapsModel):
     def __str__(self):
         return '{}'.format(self.layer)
 
+class UserConfig(models.Model):
+    ''' User config (layer visibility and order) '''
+    user = models.ForeignKey(User, models.CASCADE, verbose_name=_('user'))
+    layer = models.ForeignKey(Layer, models.CASCADE, verbose_name = _('layer'))
+    order = models.SmallIntegerField(_('order'), default=0)
+    visible = models.BooleanField(default=True)
+
+    @classmethod
+    def sync(cls, user, map):
+        # Delete configuration for layers that are not on the map anymore
+        layers = map.layer_set.all()
+        cls.objects.filter(user=user,layer__map=map).exclude(layer__in=layers).delete()
+        # create missing config of map layers for this user
+        numcreated = 0
+        for layer in map.layer_set.all():
+            _, created = cls.objects.get_or_create(user=user,layer=layer,defaults={'order': layer.order,'visible': layer.visible})
+            if created:
+                numcreated+=1
+        return numcreated
+
+    @classmethod
+    def update(cls, user, map):
+        # Delete configuration for layers that are not on the map anymore
+        layers = map.layer_set.all()
+        cls.objects.filter(user=user,layer__map=map).exclude(layer__in=layers).delete()
+        # create missing config of map layers for this user
+        numcreated = 0
+        for layer in map.layer_set.all():
+            _, created = cls.objects.update_or_create(user=user,layer=layer,defaults={'order': layer.order,'visible': layer.visible})
+            if created:
+                numcreated+=1
+        return numcreated
+    
+    @classmethod
+    def groups(cls, user, map):
+        ''' return dict of groups with layers on the map. Layers are ordered by user's preference '''
+        groups = {}
+        def add(layer):
+            name = layer.group.name if layer.group else 'Layers'
+            if not name in groups:
+                groups[name] = collections.OrderedDict()
+            groups[name][layer.layer.title]=layer.asjson()
+
+        for config in cls.objects.filter(user=user, layer__map=map).order_by('order'):
+            layer = config.layer
+            # set visibility and order according to user's preference
+            layer.order = config.order
+            layer.visible = config.visible
+            add(layer)
+        return json.dumps(groups)
+        
+    def __str__(self):
+        return '{}:{}'.format(self.layer.map,self.layer.layer.title)
+    
+    class Meta:
+        verbose_name = 'User preference'
+        verbose_name_plural = 'User preferences'
+        
 class Project(MapsModel):
     slug = models.SlugField(help_text=_('Short name for url'))
     name = models.CharField(_('name'),max_length=100,unique=True,help_text=_('Descriptive name of project'))
