@@ -16,6 +16,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from maps.models import UserConfig
 
 class MapDetailView(LoginRequiredMixin, DetailView):
+    ''' View with leaflet map, legend and layer list '''
     model = Map
     
     def getMap(self):
@@ -31,6 +32,7 @@ class MapDetailView(LoginRequiredMixin, DetailView):
         return context
     
 class ProjectDetailView(MapDetailView):
+    ''' ModelView with link to remote meetnet app with monitoring locations and timeseries '''
     model = Project
 
     def getMap(self):
@@ -47,7 +49,7 @@ class ProjectDetailView(MapDetailView):
 @csrf_exempt
 @login_required
 def reorder(request, pk):
-    ''' reorder layers in map
+    ''' reorder layers in map and save to user config
         request.body contains names of layers as json array in proper order 
         is something like ["suitability","ndvi",,...]
     '''
@@ -57,19 +59,22 @@ def reorder(request, pk):
     user = request.user
     target = get_object_or_404(Map,pk=pk)
     items = json.loads(request.body.decode('utf-8'))
+
     # make sure user config is in sync with map
     UserConfig.sync(user, target)
+    
     for index, item in enumerate(items):
         config = user.userconfig_set.get(layer__map=target, layer__layer__title=item)
         if config.order != index:
             config.order = index
             config.save(update_fields=('order',))
+    
     return HttpResponse(status=200)
 
 @csrf_exempt
 @login_required
 def toggle(request, pk):
-    ''' toggle visibility of layers in map
+    ''' toggle visibility of layers in map and save to user config
         request.body contains names of layers as json array in proper order 
         is something like ["suitability","ndvi",,...]
     '''
@@ -79,12 +84,15 @@ def toggle(request, pk):
     user = request.user
     target = get_object_or_404(Map,pk=pk)
     items = json.loads(request.body.decode('utf-8'))
+    
     # make sure user config is in sync with map
     UserConfig.sync(user, target)
+    
     for item in items:
         config = user.userconfig_set.get(layer__map=target, layer__layer__title=item)
         config.visible = not config.visible
         config.save(update_fields=('visible',))
+    
     return HttpResponse(status=200)
 
 

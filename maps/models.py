@@ -31,6 +31,7 @@ class MapsModel(models.Model):
         app_label = 'maps'
         
 class Timeseries(MapsModel):
+    ''' model that links with timeseries from a remote meetnet app '''
     name = models.CharField(_('name'),max_length=100,unique=True)
     server = models.URLField(_('server'))
     locations = models.CharField(_('locations'),max_length=100)
@@ -44,37 +45,39 @@ class Timeseries(MapsModel):
         verbose_name_plural = 'Timeseries'
         
 class Map(MapsModel):
-    
+    ''' Collection of map layers '''
     slug = models.SlugField(help_text=_('Short name for map'), null=True)
     name = models.CharField(_('name'),max_length=100,unique=True)
     bbox = models.CharField(_('extent'),max_length=100,null=True,blank=True)
 
     def layers(self):
+        ''' return ordered json dictionary of all layers using wms title as key '''
         retval = collections.OrderedDict()
         for layer in self.layer_set.order_by('order'):
-            retval[layer.layer.title]=layer.asjson()
+            retval[layer.layer.title]=layer.wms_options()
         return json.dumps(retval)
 
     def groups(self):
+        ''' return json dictionary of groups with group name as key and ordered dictionary of layers as values ''' 
         groups = {}
 
+        # Add ungrouped layers with default group name 'Layers'
         ungrouped = self.layer_set.filter(group__isnull=True).order_by('order')
         if ungrouped:
             groups['Layers'] = collections.OrderedDict()
             for layer in ungrouped:
-                groups['Layers'][layer.layer.title]=layer.asjson()
-            
+                groups['Layers'][layer.layer.title]=layer.wms_options()
+
+        # add all groups and layers            
         for group in self.group_set.order_by('name'):
             groups[group.name] = collections.OrderedDict()
             for layer in group.layer_set.order_by('order'):
-                groups[group.name][layer.layer.title]=layer.asjson()
+                groups[group.name][layer.layer.title]=layer.wms_options()
 
         return json.dumps(groups)
                 
-    def user_groups(self, user):
-        return UserConfig.groups(user, self)
-    
     def get_extent(self):
+        ''' compute and return map extent from layers '''
         map_extent = []
         for layer in self.layer_set.exclude(use_extent=False):
             bbox = layer.extent()
@@ -89,12 +92,14 @@ class Map(MapsModel):
         return map_extent
     
     def set_extent(self):
+        ''' update self.bbox with string representation of current extent ''' 
         ext = self.get_extent()
         self.bbox = ','.join(map(str,ext))
         self.save(update_fields=('bbox',))
         return ext
     
     def extent(self):
+        ''' return current extent. Calculate if self.bbox is undefined '''
         if not self.bbox:
             return self.set_extent()
         else:
@@ -128,6 +133,7 @@ class Mirror(Map):
         return index
 
 class Group(models.Model):
+    ''' Layer group '''
     name = models.CharField(_('group'), max_length=100)
     map = models.ForeignKey(Map,on_delete=models.CASCADE)
 
@@ -142,7 +148,8 @@ class Group(models.Model):
         verbose_name_plural = _('groups')
         unique_together = ('name','map')
         
-class Layer(MapsModel): 
+class Layer(MapsModel):
+    ''' Layer on the map. Layer can be configured (order, visibility, opacity etc) Currently only WMS layers are supported ''' 
     map = models.ForeignKey(Map, models.CASCADE, verbose_name=_('map'))
     layer = models.ForeignKey(WMSLayer, models.CASCADE, verbose_name=_('WMS layer'),null=True)
     group = models.ForeignKey(Group, models.CASCADE, blank=True, null=True, verbose_name=_('group'))
@@ -167,11 +174,12 @@ class Layer(MapsModel):
     stylesheet = models.URLField(_('stylesheet'),null=True, blank=True, help_text=_('url of stylesheet for GetFeatureInfo response'))
 
     def extent(self):
+        ''' return extent of WMS layer in WGS84 coordinates '''
         return self.layer.extent()
     
-    def asjson(self):
+    def wms_options(self):
         '''
-        returns json dict for L.tileLayer.wms
+        returns options dict for L.tileLayer.wms
         '''
         ret = {
             'url': self.layer.server.url,
@@ -211,8 +219,9 @@ class UserConfig(models.Model):
 
     @classmethod
     def sync(cls, user, map):
-        # Delete configuration for layers that are not on the map anymore
+        ''' Synchronize user configuration with default map layers '''
         layers = map.layer_set.all()
+        # Delete configuration for layers that are not on the map anymore
         cls.objects.filter(user=user,layer__map=map).exclude(layer__in=layers).delete()
         # create missing config of map layers for this user
         numcreated = 0
@@ -224,8 +233,9 @@ class UserConfig(models.Model):
 
     @classmethod
     def update(cls, user, map):
-        # Delete configuration for layers that are not on the map anymore
+        ''' Update user configuration from default map layers. (This is a reset to default) '''
         layers = map.layer_set.all()
+        # Delete configuration for layers that are not on the map anymore
         cls.objects.filter(user=user,layer__map=map).exclude(layer__in=layers).delete()
         # create missing config of map layers for this user
         numcreated = 0
@@ -237,13 +247,15 @@ class UserConfig(models.Model):
     
     @classmethod
     def groups(cls, user, map):
-        ''' return dict of groups with layers on the map. Layers are ordered by user's preference '''
+        ''' return json dict of groups with layers on the map. Layers are ordered by user's preference '''
+        
         groups = {}
+
         def add(layer):
             name = layer.group.name if layer.group else 'Layers'
             if not name in groups:
                 groups[name] = collections.OrderedDict()
-            groups[name][layer.layer.title]=layer.asjson()
+            groups[name][layer.layer.title]=layer.wms_options()
 
         for config in cls.objects.filter(user=user, layer__map=map).order_by('order'):
             layer = config.layer
@@ -257,8 +269,8 @@ class UserConfig(models.Model):
         return '{}:{}'.format(self.layer.map,self.layer.layer.title)
     
     class Meta:
-        verbose_name = 'User preference'
-        verbose_name_plural = 'User preferences'
+        verbose_name = 'User Preference'
+        verbose_name_plural = 'User Preferences'
         
 class Project(MapsModel):
     slug = models.SlugField(help_text=_('Short name for url'))
