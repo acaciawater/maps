@@ -22,6 +22,13 @@
 <script src="/static/js/betterwms.js"></script>
 <script src="/static/js/xml2json.js"></script>
 <script src="/static/js/maps.js"></script>
+
+<style>
+#map {
+  height: calc(100% - 84px); /* quick fix to make map full screen */
+}
+</style>
+
 <script>
 $(function() {
 	const options = {{options|safe}};
@@ -69,7 +76,7 @@ $(function() {
 {% block content %}
 <div class="full container-fluid">
 	<div class="full row row-fluid">
-		<div id="map" class="full col-sm-10"></div>
+		<div id="map" class="col-sm-10"></div>
 		{% block list %}
 		<ul id="list" class="list-group scroll col-sm-2 pr-0">
 			{% if series %}
