@@ -335,7 +335,7 @@ function initMap (div, options, id) {
 
   // var control = L.control.labelcontrol({ position: 'topleft' }).addTo(map);
 
-  L.control.scale({position:'bottomLeft'}).addTo(map);
+  L.control.scale({position:'bottomleft'}).addTo(map);
   
   map.on('baselayerchange', function (e) { changeBaseLayer(e) })
   map.on('zoomend', function () { saveBounds(map) })
