@@ -24,8 +24,11 @@
 <script src="/static/js/maps.js"></script>
 
 <style>
-#map {
-  height: calc(100% - 84px); /* quick fix to make map full screen */
+.remain {
+  height: calc(100vh - 88px); /* quick fix to make map full screen */
+}
+#list {
+	overflow-y: auto;
 }
 </style>
 
@@ -50,10 +53,9 @@ $(function() {
 		list.append(item);
 		addOverlays(map, $(`#${groupId}`), layers)
 			.then(overlays => {
-				// do something usefulin
+			 	$("#list").height($("#map").height());
 			});
 	});
- 	$("#list").height($("#map").height());
 
 {% if series %}
  	const series = {{series|safe}};
@@ -67,18 +69,18 @@ $(function() {
 
 </script>
 {% endblock %}
-    {% block header %}
-    <nav class="navbar navbar-dark bg-dark">
-    <span class=""><img class="logo" src="/static/default-logo.png"></img></span>
+{% block header %}
+<nav class="navbar navbar-dark bg-dark">
+	<span class=""><img class="logo" src="/static/default-logo.png"></img></span>
 	<a class="cog fas fa-cog fa-2x float-right" href="{% url object|admin_urlname:'change' object.id %}" title="Admin page"></a>
-    </nav>
-    {% endblock header %}
+</nav>
+{% endblock header %}
 {% block content %}
-<div class="full container-fluid">
-	<div class="full row row-fluid">
-		<div id="map" class="col-sm-10"></div>
+<div class="container-fluid remain">
+	<div class="row row-fluid h-100">
+		<div id="map" class="col-sm-10 h-100"></div>
 		{% block list %}
-		<ul id="list" class="list-group scroll col-sm-2 pr-0">
+		<div id="list" class="list-group scroll col-sm-2 pr-0">
 			{% if series %}
 			<a class="list-group-item active" data-toggle="collapse" href="#series" aria-expanded="true" aria-controls="series">
 				<i class="fas pr-3 fa-chart-line"></i>{%trans "Timeseries"%}<span id="itemcount" class="float-right badge badge-light">...</span>
@@ -86,7 +88,7 @@ $(function() {
 			<div class="collapse hide" id="series">
 			</div>
 			{% endif %}
-		</ul>
+		</div>
 		{% endblock list %}
 	</div>
 </div>
