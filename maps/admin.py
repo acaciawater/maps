@@ -10,7 +10,7 @@ from maps.forms import LayerPropertiesForm, SelectMapForm
 from maps.models import Project, Timeseries, Group, Mirror, UserConfig
 
 from .models import Map, Layer
-
+admin.site.site_header = 'GW4E Administration'
 
 @register(Group)
 class GroupAdmin(admin.ModelAdmin):
