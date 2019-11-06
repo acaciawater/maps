@@ -22,7 +22,7 @@
 <div class="container">
 <h2 class="mt-3">Groundwater Mapping for Climate Resilient WASH</h2>	
 <p>This website presents the results of the project "Groundwater Mapping for Climate Resilient WASH in arid and semi-arid areas of Ethiopia".
-The project is funded by the European Union and managed by <a href="//www.unicef.org/ethiopia">Unicef Ethiopia</a>. Contracting parties are <a href="http://www.acaciawater.com">Acacia Water</a> and <a href="http://www.aquacon.info">Aquacon</a>
+The project is funded by the European Union and managed by <a href="//www.unicef.org/ethiopia">Unicef Ethiopia</a>. Contracting parties are <a href="//www.acaciawater.com">Acacia Water</a> and <a href="//www.aquacon.info">Aquacon</a>
 </p>
 <p>Select a document for download below or click on the map to open an interactive cluster map</p>
 <div class="row row-fluid">
@@ -55,9 +55,9 @@ The project is funded by the European Union and managed by <a href="//www.unicef
 $(function() {
 	// initialize the map
 	var map = L.map("map",{center:[10,40],zoom:4});
-	var osm = L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+	var osm = L.tileLayer('//{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 		maxZoom: 19,
- 		attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+ 		attribution: '&copy; <a href="//www.openstreetmap.org/copyright">OpenStreetMap</a>'
 	});
 	osm.addTo(map);
 	$.getJSON('/static/clusters.json').then(data => {
