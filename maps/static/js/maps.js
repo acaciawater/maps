@@ -43,10 +43,37 @@ function restoreMap(map) {
 }
 
 function saveBounds(map) {
-	const b = map.getBounds();
-	const key = `bounds${map.id}`;
-	storage.setItem(key,b.toBBoxString());
+	const b = map.getBounds()
+	storage.setItem('bounds',b.toBBoxString());
+
+	// calculate screen resolution in pixels per meter
+	const dpm = 96 * window.devicePixelRatio / 0.0254;
+
+	// Size of window
+	const size = map.getSize();
+	const width = size.x / dpm;
+	const height = size.y / dpm;
+	
+	// get dimension of map in meters
+	const dx1 = map.distance(b.getNorthWest(), b.getNorthEast());
+	const dx2 = map.distance(b.getSouthWest(), b.getSouthEast());
+	const dy1 = map.distance(b.getNorthWest(), b.getSouthWest());
+	const dy2 = map.distance(b.getNorthEast(), b.getSouthEast());
+
+	// average scale
+	const scale = ((dx1+dx2)/2/width + (dy1+dy2)/2/height)/2;
+	//	console.log(`Scale = 1:${scale}`);
+	
+	// save rounded scale to storage
+	const rounded = Number(scale.toPrecision(1));
+	storage.setItem('scale',`1:${rounded}`);
 }
+
+//function saveBounds(map) {
+//	const b = map.getBounds();
+//	const key = `bounds${map.id}`;
+//	storage.setItem(key,b.toBBoxString());
+//}
 
 function restoreBounds(map) {
 	const key = `bounds${map.id}`;
