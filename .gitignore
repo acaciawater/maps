@@ -1,8 +1,11 @@
 *.pyc
 __pychache__
 
-/db.sqlite3
+.*
+/db.*
 node_modules/
-package-lock.json
+package*.json
 .settings/
-
+.vscode/
+env/
+env
