@@ -103,7 +103,10 @@ class Layer(models.Model):
     
     def legend_url(self, style='default'):
         try:
-            return self.details().styles[style]['legend'].replace('http://','https://')
+            url = self.details().styles[style]['legend'].replace('http://','https://')
+            if url:
+                url += '&LAYERTITLE=FALSE' 
+            return url
         except:
             return None
 
