@@ -119,7 +119,8 @@ class Map(MapsModel):
 
 
 @receiver(pre_save, sender=Map)
-def map_save(_sender, instance, **_kwargs):
+def map_save(sender, **kwargs):
+    instance = sender
     if instance.slug is None:
         instance.slug = slugify(instance.name)
 
