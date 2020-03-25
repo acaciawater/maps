@@ -21,7 +21,7 @@ class Inventory {
   }
 
   getColor (value) {
-    if (value !== undefined) {
+    if (value !== null) {
       const attr = this.getAttribute()
       const classes = this.styles.classes[attr]
       const colors = this.styles.colors[attr]
@@ -63,7 +63,7 @@ class Inventory {
   getFeatureInfo (feature) {
     let html = '<h5 class="text-center unibar">Inventory Data</h5><table class="table table-hover table-sm"><thead><tr><th>Attribute</th><th>Value</th></tr></thead><tbody>'
     for (const [prop, value] of Object.entries(feature.properties)) {
-      html += `<tr><td>${prop}</td><td>${value}</td></tr>`
+      html += `<tr><td>${prop}</td><td>${value || "-"}</td></tr>`
     }
     return html + '</tbody></table>'
   }
@@ -93,6 +93,7 @@ class Inventory {
       }
       html += `<div><i class="fas fa-circle fa-xs pr-2" style="color:${colors[i]}"></i>${txt}</div>`
     }
+    html += '<div><i class="fas fa-circle fa-xs pr-2" style="color:gray"></i>no data</div>'
     return html
   }
 
@@ -106,7 +107,8 @@ class Inventory {
     this.layer = L.geoJSON(data, {
       onEachFeature: (feature, layer) => {
         if (attr) {
-          layer.bindTooltip(`${attr}: ${feature.properties[attr]}`)
+          const value = feature.properties[attr] || "no data"
+          layer.bindTooltip(`${attr}: ${value}`)
         }
         layer.bindPopup(this.getFeatureInfo(feature), { maxWidth: 800 })
       },
