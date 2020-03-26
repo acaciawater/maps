@@ -132,16 +132,19 @@ function sortOverlays (layers, keys) {
 
 function toggleLayer (event) {
   const icon = event.target
-  const name = icon.nextElementSibling.innerText
+  const legend = $(icon).next()
+  const name = legend.text()
   const layer = overlayLayers.find(o => o.options.displayName === name)
   if (layer.options.visible) {
     theMap.removeLayer(layer)
     layer.options.visible = false
     icon.className = icon.className.replace(iconVisible, iconInvisible)
+    legend.next('.collapse').collapse('hide')
   } else {
     theMap.addLayer(layer)
     layer.options.visible = true
     icon.className = icon.className.replace(iconInvisible, iconVisible)
+    legend.next('.collapse').collapse('show')
   }
   reorderOverlays(overlayLayers)
   // inform backend about visibility change
@@ -170,7 +173,7 @@ async function addOverlays (map, list, layers) {
       if (layer.downloadUrl) {
         item += `<a href="${layer.downloadUrl}"><i class="fas fa-file-download float-right" title="download"></i></a>`
       }
-      item += `<div class="collapse hide" id="legend_${id}"><img src="${layer.legend}"></img></div></li>`
+      item += `<div class="collapse" id="legend_${id}"><img src="${layer.legend}"></img></div></li>`
       list.append(item)
     })
   })
@@ -302,6 +305,11 @@ function initMap (div, options, id) {
     pane: 'basePane'
   })
 
+  var stamen = L.tileLayer('http://tile.stamen.com/terrain/{z}/{x}/{y}.png', {
+    attribution: 'Map tiles by <a href="http://stamen.com">Stamen Design</a>, under <a href="http://creativecommons.org/licenses/by/3.0">CC BY 3.0</a>. Data by <a href="http://openstreetmap.org">OpenStreetMap</a>, under <a href="http://creativecommons.org/licenses/by-sa/3.0">CC BY SA</a>.',
+    pane: 'basePane',
+  })
+  
   var roads = L.gridLayer.googleMutant({
     type: 'roadmap', // valid values are 'roadmap', 'satellite', 'terrain' and 'hybrid'
     pane: 'basePane'
@@ -322,7 +330,7 @@ function initMap (div, options, id) {
     pane: 'basePane'
   })
 
-  const baseMaps = { Openstreetmap: osm, 'Google maps': roads, 'Google satellite': satellite, 'ESRI topo': topo, 'ESRI satellite': imagery }
+  const baseMaps = { Openstreetmap: osm, 'Terrain': stamen, 'Google maps': roads, 'Google satellite': satellite, 'ESRI topo': topo, 'ESRI satellite': imagery }
   const overlayMaps = {}
   map.layerControl = L.control.layers(baseMaps, overlayMaps).addTo(map)
 
