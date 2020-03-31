@@ -168,7 +168,7 @@ class Layer(MapsModel):
     map = models.ForeignKey(Map, models.CASCADE, verbose_name=_('map'))
     layer = models.ForeignKey(WMSLayer, models.CASCADE,
                               verbose_name=_('WMS layer'), null=True)
-    group = models.ForeignKey(Group, models.CASCADE,
+    group = models.ForeignKey(Group, models.SET_NULL,
                               blank=True, null=True, verbose_name=_('group'))
     order = models.SmallIntegerField(_('order'))
     visible = models.BooleanField(_('visible'), default=True)
@@ -330,3 +330,28 @@ class Project(MapsModel):
 def project_save(_sender, instance, **_kwargs):
     if instance.slug is None:
         instance.slug = slugify(instance.name)
+
+
+class DocumentGroup(models.Model):
+    name = models.CharField(max_length=100)    
+    parent = models.ForeignKey('DocumentGroup', on_delete=models.CASCADE, blank=True, null=True)
+    
+    def __str__(self):
+        if self.parent and self.parent.parent is not None:
+            # insert parent name, except when parent is root
+            return f'{self.parent}-{self.name}'
+        else:
+            return self.name
+
+class Document(models.Model):
+    ''' Downloadable document '''
+    group = models.ForeignKey(DocumentGroup,on_delete=models.CASCADE)
+    cluster = models.CharField(max_length=30,blank=True,null=True)
+    name = models.CharField(max_length=100)    
+    description = models.TextField(blank=True, null=True)
+    url = models.URLField()
+
+    def __str__(self):
+        return self.name
+    
+    

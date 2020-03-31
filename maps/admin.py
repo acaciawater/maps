@@ -7,9 +7,14 @@ from django.utils.translation import gettext_lazy as _
 
 from maps.actions import update_mirror
 from maps.forms import LayerPropertiesForm, SelectMapForm
-from maps.models import Project, Timeseries, Group, Mirror, UserConfig
+from maps.models import Project, Timeseries, Group, Mirror, UserConfig,\
+    DocumentGroup, Document
+
+from wms.models import Layer as WMSLayer
 
 from .models import Map, Layer
+from django.db.models.fields import TextField
+from django.forms.widgets import TextInput, Textarea
 admin.site.site_header = 'GW4E Administration'
 
 @register(Group)
@@ -111,7 +116,11 @@ class LayerInline(admin.TabularInline):
 
     def get_queryset(self, request):
         return admin.TabularInline.get_queryset(self, request).order_by('order').prefetch_related('layer')
-
+    
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == 'layer':
+            kwargs['queryset'] = WMSLayer.objects.order_by('server__name','layername')
+        return admin.TabularInline.formfield_for_foreignkey(self, db_field, request, **kwargs)
 
 @register(Map)
 class MapAdmin(admin.ModelAdmin):
@@ -157,3 +166,17 @@ class TimeseriesAdmin(admin.ModelAdmin):
 @register(Project)
 class ProjectAdmin(admin.ModelAdmin):
     pass
+
+class DocumentInline(admin.TabularInline):
+    model = Document
+    formfield_overrides = {TextField: {'widget': Textarea(attrs={'rows':1})}}
+    
+@register(Document)
+class DocumentAdmin(admin.ModelAdmin):
+    list_display = ('name','cluster','group','url')
+    list_filter = ('group','cluster')
+
+@register(DocumentGroup)
+class DocumentGroupAdmin(admin.ModelAdmin):
+    inlines = [DocumentInline]
+

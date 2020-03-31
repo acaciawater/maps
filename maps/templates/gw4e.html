@@ -3,13 +3,17 @@
 {% block script %}
 {{ block.super }}
 <script src="//unpkg.com/leaflet@1.4.0/dist/leaflet.js"></script>
+<!-- <script src="/static/js/bootstrap-treeview.js"></script> -->
+<script src="/static/js/bstreeview.js"></script>
 {% endblock %}
 {% block style %}
 {{ block.super }}
 <link rel="stylesheet" href="//unpkg.com/leaflet@1.4.0/dist/leaflet.css"/>
+<!-- <link rel="stylesheet" href="/static/css/bootstrap-treeview.css"/> -->
+<link rel="stylesheet" href="/static/css/bstreeview.css"/>
 <style>
 #map {
-  height: 100%;
+  height: 600px;
   border: 2px solid #1CABE3;
 }
 .list-group-item {
@@ -24,32 +28,59 @@
 <p>This website presents the results of the project "Groundwater Mapping for Climate Resilient WASH in arid and semi-arid areas of Ethiopia".
 The project is funded by the European Union and managed by <a href="//www.unicef.org/ethiopia">Unicef Ethiopia</a>. Contracting parties are <a href="//www.acaciawater.com">Acacia Water</a> and <a href="//www.aquacon.info">Aquacon</a>
 </p>
-<p>Select a document for download below or click on the map to open an interactive cluster map</p>
+<p>Select a document or map below or click on the map on the right to open an interactive overlay map</p>
 <div class="row row-fluid">
 <div class="col">
-	<div id="map"></div>
+<nav>
+  <div class="nav nav-tabs" id="nav-tab" role="tablist">
+    <a class="nav-item nav-link active" id="nav-theme-tab" data-toggle="tab" href="#nav-theme" role="tab" aria-controls="nav-theme" aria-selected="true">Topic</a>
+    <a class="nav-item nav-link" id="nav-cluster-tab" data-toggle="tab" href="#nav-cluster" role="tab" aria-controls="nav-cluster" aria-selected="false">Cluster</a>
+  </div>
+</nav>
+<div class="tab-content" id="nav-tabContent">
+  <div class="tab-pane fade show active" id="nav-theme" role="tabpanel" aria-labelledby="nav-theme-tab">
+  	<div id="tree1"></div>
+  </div>
+  <div class="tab-pane fade" id="nav-cluster" role="tabpanel" aria-labelledby="nav-cluster-tab">
+  	<div id="tree2"></div>
+  </div>
+</div>
 </div>
 <div class="col">
-	<div class="list-group">
-		<li class="list-group-item unibar"><strong>Phase 1</strong></li>
-		<li class="list-group-item list-group-item-action"><a href="https://cloud.acaciadata.com/index.php/s/lpqZtKur0Eb08Mg">Final report phase 1</a><a href="https://cloud.acaciadata.com/index.php/s/lpqZtKur0Eb08Mg/download"><i class="mt-1 fas fa-download float-right"></i></a></li>
-		<li class="list-group-item list-group-item-action"><a href="https://cloud.acaciadata.com/index.php/s/wpfMTS0rkBCQVfq">Geological maps 1:250000</a></li>
-		<li class="list-group-item list-group-item-action"><a href="https://cloud.acaciadata.com/index.php/s/k5DMDgzUWyekdoR">Conceptual models</a></li>
-		<li class="list-group-item list-group-item-action"><a href="https://cloud.acaciadata.com/index.php/s/JQM8lI6pOnXbD3D">Socio-economic maps 1:250000</a></li>
-		<li class="list-group-item list-group-item-action"><a href="https://cloud.acaciadata.com/index.php/s/WFQySiAgx0Y2jzi">Water demand maps 1:250000</a></li>
-		<li class="list-group-item list-group-item-action"><a href="https://cloud.acaciadata.com/index.php/s/9hRFyYvdwTdqLoz">Suitability maps 1:250000</a></li>
-		<li class="list-group-item list-group-item-action"><a href="https://cloud.acaciadata.com/index.php/s/sE4RBGJROiAvVwX">Woreda suitability maps</a></li>
-		<li class="list-group-item list-group-item-action">Inventory data</li>
-		<li class="list-group-item unibar"><strong>Phase 2</strong></li>
-		<li class="list-group-item list-group-item-action"><a href="https://cloud.acaciadata.com/index.php/s/Wx33MyuWJ8SfJzS">Final report phase 2</a><a href="https://cloud.acaciadata.com/index.php/s/Wx33MyuWJ8SfJzS/download"><i class="mt-1 fas fa-download float-right"></i></a></li>
-		<li class="list-group-item list-group-item-action"><a href="https://cloud.acaciadata.com/index.php/s/H30yZCoZgXcWoMH">Hydrogeological maps 1:50000</a></li>
-		<li class="list-group-item list-group-item-action"><a href="https://cloud.acaciadata.com/index.php/s/1q0V621kb2DjILC">Drilling site maps 1:10000</a></li>
-	</div>
+	<div id="map" class="mt-5"></div>
 </div>
 </div>
 </div>
 
 <script>
+
+function documentNodes(group) {
+	return group.documents.map(doc => {
+		return {
+			text: doc.name,
+			href: doc.url
+		}
+	})
+}
+
+
+function groupNodes(group) {
+	return group.folders.map(folder => {
+		return {
+			text: folder.name,
+			state: {expanded: false},
+			nodes: [...documentNodes(folder), ...groupNodes(folder)]
+		}
+	})
+}
+
+
+function getTreeData(url) {
+	return $.getJSON(url).then(response => {
+		const tree = response.results.map(group => groupNodes(group))
+		return tree
+	})
+}
 
 $(function() {
 	// initialize the map
@@ -84,6 +115,17 @@ $(function() {
 		clusters.addTo(map);
 		map.fitBounds(clusters.getBounds());
 	});
+
+	
+	getTreeData('/docs').then(tree => {
+		const data = JSON.stringify(tree[0])
+		$("#tree1").bstreeview({data: data})
+	})
+
+	getTreeData('/clus').then(tree => {
+		const data = JSON.stringify(tree[0])
+		$("#tree2").bstreeview({data: data})
+	})
 });
 </script>
 {% endblock content %}
