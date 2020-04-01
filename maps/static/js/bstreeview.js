@@ -64,10 +64,10 @@
             var _this = this;
             this.build($(this.element), this.tree, 0);
             // Update angle icon on collapse
-            $('.bstreeview').on('click', '.list-group-item', function () {
+            $(this.element).on('click', '.list-group-item', function (sender, args) {
                 $('.state-icon', this)
                     .toggleClass(_this.settings.expandIcon)
-                    .toggleClass(_this.settings.collapseIcon);
+                    .toggleClass(_this.settings.collapseIcon)
             });
         },
         /**
