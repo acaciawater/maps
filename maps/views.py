@@ -146,20 +146,24 @@ def get_map_config(request, pk):
 def docs2json(request):
     ''' return json response with all documents grouped by theme '''
     
-    def process_group(group, result):
+    def process_group(cluster, group, result):
         data = {
             'id': group.id,
             'name': group.name,
-            'documents': process_docs(group),
+            'documents': process_docs(cluster, group),
             'folders': []
         }
         result.append(data)
-        for child in group.documentgroup_set.all():
-            process_group(child, data['folders'])
+        for child in group.children.all():
+            if not child.empty(cluster):
+                process_group(cluster, child, data['folders'])
 
-    def process_docs(group):
+    def process_docs(cluster, group):
         result = []
-        for doc in group.document_set.order_by('cluster'):
+        queryset = group.document_set.order_by('cluster','name')
+        if cluster:
+            queryset = queryset.filter(cluster=cluster)
+        for doc in queryset:
             result.append({
                 'id': doc.id,
                 'name': doc.name,
@@ -169,8 +173,13 @@ def docs2json(request):
         return result
     
     root = DocumentGroup.objects.get(parent__isnull=True)
+    cluster = request.GET.get('cluster')
+    try:
+        cluster = int(cluster)
+    except ValueError:
+        cluster = 0
     result = []
-    process_group(root, result)
+    process_group(cluster, root, result)
     return JsonResponse({'results': result})
 
 def clus2json(request):
@@ -208,7 +217,7 @@ def docs2tree(request):
 
     def process_docs(group):
         result = []
-        for doc in group.document_set.all():
+        for doc in group.document_set.order_by('name'):
             result.append({
                 'text': doc.name,
                 'href': doc.url
