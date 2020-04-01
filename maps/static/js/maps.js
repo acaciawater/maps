@@ -2,7 +2,7 @@
  * @author: theo
  */
 
-var baseMaps
+var baseMaps = {}
 
 var storage = sessionStorage // or localStorage?
 
@@ -14,8 +14,11 @@ function restoreMap (map) {
   let succes = false
   var name = storage.getItem('baselayer')
   if (name) {
-    baseMaps[name].addTo(map)
-    succes = true
+	let bm = baseMaps[name] 
+    if (bm) {
+    	bm.addTo(map)
+        succes = true
+    }
   }
   return succes
 }
