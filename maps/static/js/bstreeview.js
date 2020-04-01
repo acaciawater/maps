@@ -14,9 +14,9 @@
      */
     var pluginName = "bstreeview",
         defaults = {
-            expandIcon: 'fa fa-angle-down',
-            collapseIcon: 'fa fa-angle-right',
-            downloadIcon: 'fa fa-arrow-down',
+            expandIcon: "fa fa-angle-down",
+            collapseIcon: "fa fa-angle-right",
+            downloadIcon: "fa fa-arrow-down",
             indent: 1.25
         };
     /**
@@ -53,19 +53,21 @@
             this.nodes = [];
             // Retrieve bstreeview Json Data.
             if (this.settings.data) {
-                this.settings.data = $.parseJSON(this.settings.data);
+            	if (typeof(this.settings.data) == "string") {
+            		this.settings.data = $.parseJSON(this.settings.data);
+            	}
                 this.tree = $.extend(true, [], this.settings.data);
                 delete this.settings.data;
             }
             // Set main bstreeview class to element.
-            $(this.element).addClass('bstreeview');
+            $(this.element).addClass("bstreeview");
 
             this.initData({ nodes: this.tree });
             var _this = this;
             this.build($(this.element), this.tree, 0);
             // Update angle icon on collapse
-            $(this.element).on('click', '.list-group-item', function (sender, args) {
-                $('.state-icon', this)
+            $(this.element).on("click", ".list-group-item", function (sender, args) {
+                $(".state-icon", this)
                     .toggleClass(_this.settings.expandIcon)
                     .toggleClass(_this.settings.collapseIcon)
             });
@@ -107,15 +109,15 @@
             $.each(nodes, function addNodes(id, node) {
                 // Main node element.
                 var treeItem = $(templates.treeviewItem)
-	                .attr('href', "#" + _this.itemIdPrefix + node.nodeId)
-	                .attr('style', 'padding-left:' + leftPadding);                	
+	                .attr("href", "#" + _this.itemIdPrefix + node.nodeId)
+	                .attr("style", "padding-left:" + leftPadding);                	
                 
                 if (node.href) {
                     // add download icon.
                     var treeItemIcon = $(templates.treeviewItemDownloadIcon)
                         .addClass(_this.settings.downloadIcon)
-                		.attr('href', node.href)
-                		.attr('title', `download ${node.text}`)
+                		.attr("href", node.href)
+                		.attr("title", `download ${node.text}`)
                     treeItem.append(treeItemIcon);
                 }
 
@@ -145,7 +147,7 @@
                 if (node.nodes) {
                     // Node group item.
                     var treeGroup = $(templates.treeviewGroupItem)
-                        .attr('id', _this.itemIdPrefix + node.nodeId);
+                        .attr("id", _this.itemIdPrefix + node.nodeId);
                     parentElement.append(treeGroup);
                     _this.build(treeGroup, node.nodes, depth);
                 }
