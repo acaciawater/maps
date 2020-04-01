@@ -176,6 +176,11 @@ class DocumentAdmin(admin.ModelAdmin):
     list_display = ('name','cluster','group','url')
     list_filter = ('group','cluster')
 
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == 'group':
+            kwargs['queryset'] = DocumentGroup.objects.order_by('parent__name','name')
+        return admin.ModelAdmin.formfield_for_foreignkey(self, db_field, request, **kwargs)
+
 @register(DocumentGroup)
 class DocumentGroupAdmin(admin.ModelAdmin):
     inlines = [DocumentInline]
