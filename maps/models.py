@@ -14,6 +14,7 @@ from django.urls.base import reverse
 from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
 
+from sorl.thumbnail import ImageField
 from wms.models import Layer as WMSLayer
 from wms.models import Server
 
@@ -334,7 +335,25 @@ def project_save(_sender, instance, **_kwargs):
 
 class DocumentGroup(models.Model):
     name = models.CharField(max_length=100)    
-    parent = models.ForeignKey('DocumentGroup', on_delete=models.CASCADE, blank=True, null=True)
+    parent = models.ForeignKey('DocumentGroup', on_delete=models.CASCADE, blank=True, null=True, related_name='children')
+    
+    def docs(self,cluster=0):
+        ''' returns complete list of documents of this group and its children '''
+        query = self.document_set.all()
+        if cluster:
+            query = query.filter(cluster=cluster)  
+        for doc in query:
+            yield doc
+        for child in self.children.all():
+            yield from child.docs(cluster)
+        
+    def empty(self,cluster=0):
+        ''' returns true if there are no documents in this group, or any of its children ''' 
+        try:
+            next(self.docs(cluster))
+            return False
+        except StopIteration:
+            return True
     
     def __str__(self):
         if self.parent and self.parent.parent is not None:
@@ -343,6 +362,10 @@ class DocumentGroup(models.Model):
         else:
             return self.name
 
+
+def upload_to_cluster(instance, filename):
+    return 'cluster{0}/{1}'.format(instance.cluster or 0, filename)
+    
 class Document(models.Model):
     ''' Downloadable document '''
     group = models.ForeignKey(DocumentGroup,on_delete=models.CASCADE)
@@ -350,8 +373,11 @@ class Document(models.Model):
     name = models.CharField(max_length=100)    
     description = models.TextField(blank=True, null=True)
     url = models.URLField()
-
+    doc = ImageField(upload_to=upload_to_cluster, blank=True, null=True)
+    
     def __str__(self):
         return self.name
     
+    class Meta:
+        ordering = ('name',)
     
