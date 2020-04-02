@@ -173,7 +173,7 @@ class DocumentInline(admin.TabularInline):
     
 @register(Document)
 class DocumentAdmin(admin.ModelAdmin):
-    list_display = ('name','cluster','group','url')
+    list_display = ('name','cluster','group','doc','url')
     list_filter = ('group','cluster')
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):

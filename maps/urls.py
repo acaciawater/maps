@@ -19,10 +19,14 @@ from .views import ProjectDetailView, MapDetailView, HomeView
 from django.urls.conf import include
 from django.conf import settings
 from django.conf.urls.static import static
-from maps.views import map_proxy, toggle, reorder, get_map_config, docs2json, clus2json
+from maps.views import map_proxy, toggle, reorder, get_map_config, docs2json, clus2json,\
+    BrowseView, OverlayView
 
 urlpatterns = [
-    path('', HomeView.as_view(),name='home'),
+    path('', HomeView.as_view()),
+    path('home', HomeView.as_view(),name='home'),
+    path('browse', BrowseView.as_view(),name='browse'),
+    path('view', OverlayView.as_view(),name='view'),
     path('admin/', admin.site.urls),
     path('wms/', include('wms.urls')),
     path('map/<int:pk>/reorder/', reorder,name='map-reorder'),
@@ -35,14 +39,12 @@ urlpatterns = [
     path('docs', docs2json),
     path('clus', clus2json),
     
-] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
- 
+]
+urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT) 
+urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+  
 if settings.DEBUG:
     import debug_toolbar
     urlpatterns = [
         path('__debug__/', include(debug_toolbar.urls)),
-
-        # For django versions before 2.0:
-        # url(r'^__debug__/', include(debug_toolbar.urls)),
-
     ] + urlpatterns

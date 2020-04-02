@@ -119,6 +119,10 @@
                 		.attr("href", node.href)
                 		.attr("title", `download ${node.text}`)
                     treeItem.append(treeItemIcon);
+                    if (node.img) {
+                    	// there is a thumbnail image, save as attribute
+                    	treeItem.attr("thumb", node.img)
+                    }
                 }
 
                 // Set Expand and Collapse icons.

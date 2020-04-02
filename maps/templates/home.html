@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+{% block title %}GW4E Dissemination Tool{% endblock %}
+{% block style %}
+{{ block.super }}
+
+<style>
+.wave {
+    width:100%;
+    position: absolute;
+    bottom:0;
+    z-index:0;
+}
+.wave img {
+    position: relative;
+    display: block;
+    float: left;
+}
+
+.container {
+  height: 100%;
+  background-color: white;
+  background-image: url("/static/wave.png");
+  background-position: bottom;
+  background-size: 100% 33%;
+  background-repeat: no-repeat;
+}
+
+.note {
+  color: white;
+  position: absolute;
+  top: 80%;
+  width: 50%;
+  left: 25%;
+}
+
+.content {
+  margin-left: 10%;
+  margin-right: 10%;
+  margin-top: 5%;
+}
+
+h2,h3 {
+  padding-bottom: 1em;
+}
+
+.btn-primary.custom {
+  background-color: navy;
+  border-color: navy;
+}
+
+</style>
+{% endblock %}
+{% block content %}
+<div class="container">
+<div class="content">
+<h2 class="text-center">Groundwater Mapping<br>for Climate Resilient WASH in Ethiopia</h2>	
+<h3 class="text-center">Dissemination of project results</h3>
+<hr/>
+<div class="buttons">
+<div class="row mb-2">
+<div class="col col-2"><a class="btn btn-primary custom" role="button" href="/browse">Documents</a></div>
+<div class="col col-10">Browse or download project documents and maps</div>
+</div>
+<div class="row mt-2">
+<div class="col col-2"><a class="btn btn-primary custom" role="button" href="/view">Map viewer</a></div>
+<div class="col col-10">Open interactive map viewer with groundwater suitability maps</div>
+</div>
+</div>
+</div>
+<div class="note">
+<p>The Groundwater Mapping for Climate Resilient WASH in Ethiopia partnership - GW4E has
+been carried out by Acacia Water in cooperation with Dr. Seifu
+Kebede, Mr. Abebe Ketema, Acquacon Engineering, Ministry of Water, Irrigation and Energy
+- MOWIE, EU-JRC and the full leadership and support of UNICEF Ethiopia.
+</p>
+<p>The project has been funded by the EU-RESET II program and has been carried out between June 2018 and
+December 2019.</p>
+<small class="float-right">April 2020</small>
+</div>
+</div>
+{% endblock content %}

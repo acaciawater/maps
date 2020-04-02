@@ -1,1 +1,2 @@
 for info popups: https://astuntechnology.github.io/osgis-ol3-leaflet/leaflet/05-WMS-INFO.html
+update /etc/Imagemagick/policy.pdf to enable PDF

@@ -8,6 +8,7 @@ import json
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.db.models import Q
 from django.http.response import HttpResponse, HttpResponseNotFound,\
     JsonResponse
 from django.shortcuts import get_object_or_404, redirect
@@ -17,6 +18,7 @@ from django.views.generic.detail import DetailView
 
 from .models import Map, Project, UserConfig
 from maps.models import DocumentGroup, Document
+from sorl.thumbnail.shortcuts import get_thumbnail
 
 
 class MapDetailView(LoginRequiredMixin, DetailView):
@@ -109,7 +111,13 @@ def toggle(request, pk):
 
 
 class HomeView(TemplateView):
-    template_name = 'gw4e.html'
+    template_name = 'home.html'
+
+class BrowseView(TemplateView):
+    template_name = 'browse.html'
+    
+class OverlayView(TemplateView):
+    template_name = 'overlay.html'
 
 
 CLUSTERS = {
@@ -162,14 +170,22 @@ def docs2json(request):
         result = []
         queryset = group.document_set.order_by('cluster','name')
         if cluster:
-            queryset = queryset.filter(cluster=cluster)
+            queryset = queryset.filter(Q(cluster=cluster)|Q(cluster=0))
         for doc in queryset:
-            result.append({
+            item = {
                 'id': doc.id,
                 'name': doc.name,
                 'description': doc.description,
-                'url': doc.url
-                })
+                }
+            if doc.doc:
+                item['url'] = doc.doc.url
+                try:
+                    img = get_thumbnail(doc.doc, 'x600')
+                    if img:
+                        item['img'] = img.url
+                except ValueError:
+                    pass
+            result.append(item)
         return result
     
     root = DocumentGroup.objects.get(parent__isnull=True)

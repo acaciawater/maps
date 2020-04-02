@@ -133,3 +133,38 @@ DATABASES = {
         'NAME': 'maps',
     }
 }
+
+#THUMBNAIL_ENGINE='sorl.thumbnail.engines.convert_engine.Engine' # use only for PDF conversion
+THUMBNAIL_ENGINE='sorl.thumbnail.engines.pil_engine.Engine'
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
+            'style': '{',
+        },
+        'simple': {
+            'format': '{levelname} {asctime} {message}',
+            'style': '{',
+        },
+    },
+    'loggers': {
+        'sorl.thumbnail': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+            'formatter': 'simple'
+        },
+        'maps.management': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+            'formatter': 'simple'
+        },
+    }
+}
