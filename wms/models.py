@@ -73,7 +73,7 @@ class Layer(models.Model):
     tiled = models.BooleanField(_('tiled'), default=True)
     tiled.Boolean=True
     attribution = models.CharField(_('attribution'),max_length=200,blank=True,null=True,default='')
-    bbox = models.CharField(_('extent'),max_length=100,null=True)
+    bbox = models.CharField(_('extent'),max_length=100,null=True,blank=True)
 
     def __str__(self):
         return '{}:{}'.format(self.server, self.title or self.layername)
@@ -103,7 +103,18 @@ class Layer(models.Model):
     
     def legend_url(self, style='default'):
         try:
-            return self.details().styles[style]['legend']
+            details = self.details()
+            styles = details.styles
+            if not style in styles:
+                raise ValueError('No such style: %s' % style)
+            the_style = styles[style]
+            if not 'legend' in the_style:
+                raise ValueError('No legend defined for style=%s' % style)
+            
+            url = the_style['legend']
+            return url
+                
+#             return self.details().styles[style]['legend']
         except:
             return None
 
